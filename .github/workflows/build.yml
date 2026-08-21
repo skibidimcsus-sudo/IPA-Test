@@ -20,7 +20,7 @@ jobs:
         run: |
           npm install
           npm install @capacitor/cli @capacitor/core @capacitor/ios
-          npx cap init --force --name App --bundle-id com.app.test
+          npx cap init App com.app.test --yes
           npx cap add ios
           npx cap sync ios
           cd ios/App
