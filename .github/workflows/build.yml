@@ -23,13 +23,6 @@ jobs:
           rm -rf ios
           npx cap add ios
           npx cap sync ios
-          cd ios
-          # If a Podfile exists in ios/App, navigate there instead, otherwise run pods if present
-          if [ -d "App" ]; then
-            cd App
-            if [ -f "Podfile" ]; then
-              pod install
-            fi
-          fi
-          cd ..
-          xcodebuild -workspace ios/App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
+          cd ios/App
+          pod install
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
