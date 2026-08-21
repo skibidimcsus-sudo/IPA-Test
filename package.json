@@ -1,18 +1,13 @@
 {
-  "name": "mycustomapp",
+  "name": "pancake-store",
   "version": "1.0.0",
-  "description": "",
+  "description": "Pancake Store iOS Client",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo 'Web build ready'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0",
-    "@capacitor/ios": "^8.5.0"
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
   }
 }
