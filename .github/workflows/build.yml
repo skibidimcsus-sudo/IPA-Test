@@ -25,8 +25,8 @@ jobs:
           npx cap sync ios
           cd ios/App
           
-          # Build release version for iOS devices without needing Apple certificates
-          xcodebuild -project App.xcodeproj -scheme App -sdk iphoneos -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+          # Force Xcode to output build files into the local ./build folder
+          xcodebuild -project App.xcodeproj -scheme App -sdk iphoneos -configuration Release SYMROOT="$(pwd)/build" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
           
           # Package the built .app into an unsigned .ipa file
           mkdir Payload
