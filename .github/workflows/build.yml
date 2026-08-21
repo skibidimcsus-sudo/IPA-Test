@@ -24,5 +24,4 @@ jobs:
           npx cap add ios
           npx cap sync ios
           cd ios/App
-          pod install
-          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
+          xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug build
