@@ -16,10 +16,9 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Install dependencies & add iOS platform
+      - name: Install dependencies & sync
         run: |
           npm install
-          npx cap add ios
           npx cap sync ios
 
       - name: Build iOS App Archive
