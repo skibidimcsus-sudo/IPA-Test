@@ -16,11 +16,12 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Generate and Build iOS App
+      - name: Generate, Install Pods, and Build
         run: |
           npm install
           rm -rf ios
           npx cap add ios
           npx cap sync ios
           cd ios/App
+          pod install
           xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
