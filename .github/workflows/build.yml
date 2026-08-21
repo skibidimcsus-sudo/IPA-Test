@@ -16,12 +16,13 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Generate, Sync, and Build iOS App
+      - name: Initialize and Build iOS Platform
         run: |
           npm install
-          rm -rf ios
+          npm install @capacitor/cli @capacitor/core @capacitor/ios
+          npx cap init --force --name App --bundle-id com.app.test
           npx cap add ios
-          npx cap update ios
+          npx cap sync ios
           cd ios/App
           pod install
           xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug build
