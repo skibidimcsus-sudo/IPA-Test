@@ -1,4 +1,4 @@
-name: Build iOS App
+name: Build GhostyStore iOS App
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Install, Build, and Package IPA
+      - name: Install, Build, and Package GhostyStore IPA
         run: |
           npm install
           npm install @capacitor/ios --save
@@ -25,16 +25,14 @@ jobs:
           npx cap sync ios
           cd ios/App
           
-          # Force Xcode to output build files into the local ./build folder
           xcodebuild -project App.xcodeproj -scheme App -sdk iphoneos -configuration Release SYMROOT="$(pwd)/build" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
           
-          # Package the built .app into an unsigned .ipa file
           mkdir Payload
           cp -r build/Release-iphoneos/App.app Payload/
-          zip -r App.ipa Payload
+          zip -r GhostyStore.ipa Payload
 
-      - name: Upload IPA Artifact
+      - name: Upload GhostyStore IPA
         uses: actions/upload-artifact@v4
         with:
-          name: App-IPA
-          path: ios/App/App.ipa
+          name: GhostyStore-Build
+          path: ios/App/GhostyStore.ipa
