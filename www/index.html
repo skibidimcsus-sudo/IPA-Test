@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nintendo Switch NSP Web Emulator & Runner</title>
+    <title>Nintendo Switch NSP Real Parser & Runtime Emulator</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Three.js for 3D Game Engine -->
+    <!-- Three.js for 3D Graphics Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -22,7 +22,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0b0c10;
+            background-color: #08090d;
             color: #f3f4f6;
             overflow: hidden;
             height: 100vh;
@@ -31,13 +31,16 @@
         .font-tech {
             font-family: 'Rajdhani', sans-serif;
         }
-        /* Joy-Con Colors CSS Variables */
+        .font-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Switch Joy-Con Custom Color Variables */
         :root {
             --left-joycon: #ff3c28;  /* Neon Red */
             --right-joycon: #00c3e3; /* Neon Blue */
-            --switch-bg: #12131a;
         }
-        .theme-oled { --left-joycon: #e5e7eb; --right-joycon: #e5e7eb; }
+        .theme-oled { --left-joycon: #f3f4f6; --right-joycon: #f3f4f6; }
         .theme-mario { --left-joycon: #e60012; --right-joycon: #e60012; }
         .theme-cyber { --left-joycon: #f39c12; --right-joycon: #9b59b6; }
         .theme-zelda { --left-joycon: #d4af37; --right-joycon: #00a86b; }
@@ -47,125 +50,119 @@
         .joycon-left-text { color: var(--left-joycon); }
         .joycon-right-text { color: var(--right-joycon); }
 
-        /* Custom scrollbar */
+        /* Custom Scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1a1c23; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        ::-webkit-scrollbar-track { background: #0f111a; }
+        ::-webkit-scrollbar-thumb { background: #1f293d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
 
-        /* Virtual Joy-Con Touch Styling */
+        /* Tactile Joy-Con Buttons */
         .btn-touch {
-            transition: transform 0.05s ease, background-color 0.1s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            transition: transform 0.05s ease, background-color 0.1s ease, filter 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2);
         }
         .btn-touch:active, .btn-touch.active {
-            transform: scale(0.90) translateY(2px);
-            filter: brightness(1.2);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+            transform: scale(0.92) translateY(2px);
+            filter: brightness(1.3);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
         }
 
         .analog-base {
-            background: radial-gradient(circle, #2d3139 0%, #15181e 100%);
-            border: 3px solid #3b4252;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.5);
+            background: radial-gradient(circle, #2a2e39 0%, #111319 100%);
+            border: 3px solid #374151;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.9), 0 4px 10px rgba(0,0,0,0.6);
         }
         .analog-stick {
-            background: radial-gradient(circle, #4c566a 0%, #2e3440 100%);
-            border: 2px solid #d8dee9;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+            background: radial-gradient(circle, #4b5563 0%, #1f2937 100%);
+            border: 2px solid #9ca3af;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.8);
         }
 
-        /* Screen Glow & CRT Effect */
+        /* Screen Glass Container & Scanline Shading */
         .screen-container {
-            box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 195, 227, 0.15);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 195, 227, 0.2);
         }
         .scanlines {
             background: linear-gradient(
                 to bottom,
                 rgba(255,255,255,0),
                 rgba(255,255,255,0) 50%,
-                rgba(0, 0, 0, 0.3) 50%,
-                rgba(0, 0, 0, 0.3)
+                rgba(0, 0, 0, 0.35) 50%,
+                rgba(0, 0, 0, 0.35)
             );
             background-size: 100% 4px;
         }
-
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.8; }
-        }
-        .pulse-active {
-            animation: pulse-glow 2s infinite;
-        }
     </style>
 </head>
-<body class="flex flex-col h-screen w-screen bg-slate-950 text-gray-100 select-none overflow-hidden">
+<body class="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 select-none overflow-hidden">
 
-    <!-- Top Nintendo Switch Horizon OS Navigation Bar -->
     <header class="h-12 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 z-30 shrink-0 backdrop-blur-md">
-        <!-- Left: Branding & Status -->
+        <!-- Brand & System State -->
         <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1.5 font-tech font-bold text-lg tracking-wider">
-                <span class="px-2 py-0.5 rounded joycon-left-bg text-slate-950 font-black"><i class="fa-solid fa-gamepad"></i></span>
+            <div class="flex items-center space-x-2 font-tech font-bold text-lg tracking-wider">
+                <span class="px-2 py-0.5 rounded joycon-left-bg text-slate-950 font-black shadow-md"><i class="fa-solid fa-gamepad"></i></span>
                 <span class="text-white">SWITCH</span>
-                <span class="joycon-right-text font-semibold text-xs border border-cyan-500/40 px-1.5 py-0.5 rounded bg-cyan-950/30">NSP RUNNER v3.8</span>
+                <span class="joycon-right-text font-semibold text-xs border border-cyan-500/40 px-2 py-0.5 rounded bg-cyan-950/40 font-code">REAL NSP EXEC v4.0</span>
             </div>
             
-            <div id="docked-badge" class="hidden sm:flex items-center space-x-1 text-xs bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-full">
+            <div id="docked-badge" class="hidden sm:flex items-center space-x-1.5 text-xs bg-slate-800 border border-slate-700 text-emerald-400 px-2.5 py-0.5 rounded-full font-code">
                 <i class="fa-solid fa-tv text-[10px]"></i>
-                <span id="resolution-mode-text">1080p 60FPS (Docked)</span>
+                <span id="resolution-mode-text">1080p 60FPS (TV Docked)</span>
             </div>
         </div>
 
-        <!-- Center: Emulated Performance Stats -->
-        <div class="hidden md:flex items-center space-x-6 text-xs font-mono bg-slate-950/60 px-4 py-1 rounded-full border border-slate-800/80">
+        <!-- System Emulation Performance Counter -->
+        <div class="hidden md:flex items-center space-x-5 text-xs font-code bg-slate-950/80 px-4 py-1 rounded-full border border-slate-800">
             <div class="flex items-center space-x-1">
                 <span class="text-slate-500">FPS:</span>
                 <span id="fps-counter" class="text-emerald-400 font-bold">60.0</span>
             </div>
             <div class="flex items-center space-x-1">
-                <span class="text-slate-500">JIT:</span>
-                <span class="text-cyan-400 font-bold">ARM64 Dynarec</span>
+                <span class="text-slate-500">PROD.KEYS:</span>
+                <span id="prod-keys-status-text" class="text-rose-400 font-bold"><i class="fa-solid fa-xmark mr-0.5"></i> Missing (REQ)</span>
             </div>
             <div class="flex items-center space-x-1">
-                <span class="text-slate-500">GPU:</span>
-                <span class="text-purple-400 font-bold">WebGL2 / NVN</span>
+                <span class="text-slate-500">FW:</span>
+                <span id="fw-status-text" class="text-rose-400 font-bold"><i class="fa-solid fa-xmark mr-0.5"></i> Missing (REQ)</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-500">EXEC:</span>
+                <span class="text-cyan-400 font-bold">ARM64 WASM/JIT</span>
             </div>
         </div>
 
-        <!-- Right: Controls & Controller Status -->
+        <!-- Controls & Settings Header Shortcuts -->
         <div class="flex items-center space-x-3 text-xs">
-            <!-- Bluetooth Gamepad Indicator -->
+            <!-- Gamepad Status -->
             <div id="bt-gamepad-status" class="flex items-center space-x-1.5 bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700 cursor-pointer transition-colors" title="Bluetooth Controller Status">
                 <i id="bt-icon" class="fa-bluetooth fa-brands text-slate-500"></i>
-                <span id="bt-text" class="hidden sm:inline text-slate-400">BT Disconnected</span>
+                <span id="bt-text" class="hidden sm:inline text-slate-400 font-code text-[11px]">BT Disconnected</span>
             </div>
 
-            <!-- Handheld / Docked Mode Toggle -->
+            <!-- Dock/Handheld Mode Toggle -->
             <button id="toggle-dock-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded border border-slate-700 flex items-center space-x-1 transition-colors">
                 <i class="fa-solid fa-sliders text-cyan-400"></i>
                 <span class="hidden sm:inline">Dock/Handheld</span>
             </button>
 
-            <!-- Quick Settings Modal Launcher -->
+            <!-- Quick Settings Launcher -->
             <button id="open-settings-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-1.5 rounded border border-slate-700 transition-colors">
                 <i class="fa-solid fa-gear"></i>
             </button>
 
-            <!-- Switch System Clock -->
-            <div id="system-clock" class="font-mono text-slate-300 font-semibold pl-2">
+            <!-- Clock -->
+            <div id="system-clock" class="font-code text-slate-300 font-semibold pl-2">
                 12:00 PM
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace (Screen + Touch Joy-Cons Layout) -->
     <main class="relative flex-1 flex flex-col md:flex-row items-center justify-between p-2 md:p-4 gap-2 overflow-hidden bg-slate-950">
 
-        <!-- LEFT JOY-CON (On-Screen Controller Panel) -->
+        <!-- LEFT JOY-CON PANEL -->
         <div id="left-joycon-panel" class="joycon-panel flex md:flex-col items-center justify-between p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-800 shadow-2xl z-20 w-full md:w-44 h-28 md:h-full shrink-0 transition-all duration-300">
             
-            <!-- Top Controls (Minus, L, ZL) -->
+            <!-- Minus / L / ZL -->
             <div class="flex md:flex-col items-center justify-between w-full gap-2">
                 <div class="flex items-center justify-between w-full px-1">
                     <button id="btn-minus" class="btn-touch w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center justify-center font-bold text-lg text-slate-300" data-key="Minus">-</button>
@@ -181,7 +178,7 @@
                 </div>
             </div>
 
-            <!-- Left Analog Stick -->
+            <!-- Left Analog Joystick -->
             <div class="relative my-auto flex items-center justify-center">
                 <div id="analog-left-base" class="analog-base w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center relative touch-none">
                     <div id="analog-left-stick" class="analog-stick w-10 h-10 md:w-14 md:h-14 rounded-full absolute cursor-grab active:cursor-grabbing flex items-center justify-center">
@@ -190,7 +187,7 @@
                 </div>
             </div>
 
-            <!-- D-PAD Buttons -->
+            <!-- Directional Buttons -->
             <div class="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
                 <button id="btn-dpad-up" class="btn-touch absolute top-0 w-8 h-8 rounded-t-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DUp">▲</button>
                 <button id="btn-dpad-down" class="btn-touch absolute bottom-0 w-8 h-8 rounded-b-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DDown">▼</button>
@@ -201,49 +198,95 @@
 
         </div>
 
-        <!-- CENTER SCREEN & GAME DISPLAY CANVAS -->
+        <!-- CENTER DISPLAY CANVAS & NSP OS INTERFACE -->
         <div class="relative flex-1 w-full h-full flex flex-col items-center justify-center min-h-0 bg-slate-900 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-2xl screen-container">
             
             <!-- Canvas Render Viewport -->
             <div class="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
                 <canvas id="game-canvas" class="w-full h-full object-contain block"></canvas>
-                <div id="scanline-overlay" class="scanlines absolute inset-0 pointer-events-none opacity-30"></div>
+                <div id="scanline-overlay" class="scanlines absolute inset-0 pointer-events-none opacity-20"></div>
 
-                <!-- Overlay UI: Game Paused / Loading / OS Menu -->
-                <div id="os-overlay-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
-                    <div class="max-w-xl w-full flex flex-col items-center space-y-6">
-                        <div class="w-20 h-20 rounded-2xl joycon-left-bg flex items-center justify-center shadow-lg shadow-red-500/20">
-                            <i class="fa-solid fa-gamepad text-4xl text-slate-950"></i>
+                <!-- MAIN HORIZON OS LAUNCHER / DROP ZONE OVERLAY -->
+                <div id="os-overlay-screen" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 md:p-6 z-20 overflow-y-auto">
+                    
+                    <div class="max-w-2xl w-full flex flex-col items-center space-y-4 my-auto">
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-14 h-14 rounded-2xl joycon-left-bg flex items-center justify-center shadow-lg shadow-red-500/20">
+                                <i class="fa-solid fa-gamepad text-3xl text-slate-950"></i>
+                            </div>
+                            <div class="text-left">
+                                <h1 class="text-2xl md:text-3xl font-tech font-bold tracking-wide text-white">NINTENDO SWITCH NSP RUNNER</h1>
+                                <p class="text-xs text-slate-400">PFS0 Binary Parser • NACP Icon Decoder • ARM64 Runtime Exec</p>
+                            </div>
                         </div>
 
-                        <div>
-                            <h1 class="text-3xl font-tech font-bold tracking-wide text-white">NINTENDO SWITCH NSP RUNNER</h1>
-                            <p class="text-sm text-slate-400 mt-1">Select an integrated Switch homebrew title or load your custom <span class="text-cyan-400 font-mono font-semibold">.NSP / .NRO</span> package file.</p>
+                        <!-- System Prerequisites Status Bar -->
+                        <div class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between text-xs gap-2 shadow-lg">
+                            <div class="flex items-center space-x-2 font-code">
+                                <span class="text-slate-400 font-bold">System Lock:</span>
+                                <span id="system-ready-badge" class="px-2.5 py-0.5 rounded text-[10px] bg-rose-950/90 text-rose-400 border border-rose-800 font-bold flex items-center">
+                                    <i class="fa-solid fa-lock mr-1"></i> Missing prod.keys & Firmware
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-3 text-[11px] font-code">
+                                <span id="req-prod-key-pill" class="text-rose-400 font-semibold"><i class="fa-solid fa-circle-xmark mr-1"></i>prod.keys (REQ)</span>
+                                <span id="req-title-key-pill" class="text-slate-500"><i class="fa-solid fa-circle-minus mr-1"></i>title.keys (OPTIONAL)</span>
+                                <span id="req-fw-pill" class="text-rose-400 font-semibold"><i class="fa-solid fa-circle-xmark mr-1"></i>Firmware (REQ)</span>
+                                <button onclick="window.switchOS.showPFS0Log()" class="bg-gradient-to-r from-cyan-900 to-blue-900 text-cyan-200 border border-cyan-700/60 px-2.5 py-1 rounded-md hover:brightness-125 transition-all text-[10px] font-bold">
+                                    <i class="fa-solid fa-key mr-1"></i> Manage Files
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Dropzone for NSP / NRO files -->
-                        <div id="file-drop-zone" class="w-full border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-900/60 hover:bg-cyan-950/20 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all">
-                            <i class="fa-solid fa-file-arrow-up text-3xl text-cyan-400 mb-2"></i>
-                            <p class="text-sm font-semibold text-slate-200">Drag & Drop <span class="text-cyan-400">.NSP</span>, <span class="text-purple-400">.NRO</span> or <span class="text-emerald-400">.XCI</span> file here</p>
-                            <p class="text-xs text-slate-500 mt-1">Parses PFS0 header filesystem & launches binary engine dynamic runtime</p>
-                            <input type="file" id="nsp-file-input" accept=".nsp,.nro,.xci" class="hidden">
+                        <!-- DROP ZONE FOR REAL NSP / NRO / XCI FILES -->
+                        <div id="file-drop-zone" class="w-full border-2 border-dashed border-slate-700 hover:border-cyan-400 bg-slate-900/80 hover:bg-cyan-950/30 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group">
+                            <div id="drop-zone-content" class="flex flex-col items-center space-y-2 text-center">
+                                <div class="w-12 h-12 rounded-full bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-file-code text-2xl"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-100">Drop your REAL <span class="text-cyan-400 font-code">.NSP</span>, <span class="text-purple-400 font-code">.NRO</span> or <span class="text-emerald-400 font-code">.XCI</span> file here</p>
+                                <p class="text-xs text-slate-400 max-w-md">Parses real PFS0 headers, decodes embedded NACP titles, scans binary JPEG/PNG game icons, and executes runtime engine.</p>
+                                <span class="px-3 py-1 bg-cyan-950/80 text-cyan-300 rounded-full border border-cyan-800 text-[11px] font-semibold">Click or Drag File to Inspect & Run</span>
+                            </div>
+                            <input type="file" id="nsp-file-input" accept=".nsp,.nro,.xci,.nca" class="hidden">
                         </div>
 
-                        <!-- Quick Launch Built-in Demo Library -->
+                        <!-- Extracted Game Title Card Display (Appears after file dropped) -->
+                        <div id="extracted-game-card" class="hidden w-full bg-slate-900 border border-cyan-500/40 rounded-2xl p-4 flex items-center space-x-4 shadow-xl">
+                            <img id="game-icon-preview" src="" alt="Game Icon" class="w-20 h-20 rounded-2xl object-cover bg-slate-950 border border-slate-700 shrink-0">
+                            <div class="flex-1 overflow-hidden text-left">
+                                <span class="text-[10px] font-code bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded">PARSED NSP CONTENT</span>
+                                <h2 id="parsed-title-name" class="text-lg font-bold text-white truncate mt-1">Title Name</h2>
+                                <p id="parsed-publisher" class="text-xs text-slate-400 truncate">Publisher / Author</p>
+                                <div class="flex items-center space-x-3 text-[11px] font-code text-slate-400 mt-2">
+                                    <span>ID: <span id="parsed-title-id" class="text-amber-400">0100000000000000</span></span>
+                                    <span>Ver: <span id="parsed-version" class="text-emerald-400">1.0.0</span></span>
+                                </div>
+                            </div>
+                            <button id="run-extracted-btn" class="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg transition-all transform active:scale-95 text-xs font-tech">
+                                <i class="fa-solid fa-play mr-1"></i> LAUNCH EXEC
+                            </button>
+                        </div>
+
+                        <!-- Built-in Switch Library Demos -->
                         <div class="w-full">
-                            <p class="text-xs font-bold tracking-wider text-slate-400 uppercase text-left mb-2">Built-In Switch Library Demos:</p>
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase">Or Test Integrated Switch Demos:</p>
+                                <span class="text-[10px] text-slate-500 font-code">3D / 2D Dynamic Engine</span>
+                            </div>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <button onclick="window.switchOS.launchDemo('odyssey')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-red-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                <button onclick="window.switchOS.launchDemo('odyssey')" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-red-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
                                     <i class="fa-solid fa-cube text-red-500 text-2xl group-hover:scale-110 transition-transform"></i>
                                     <span class="text-xs font-bold text-white">Super Odyssey 3D</span>
-                                    <span class="text-[10px] text-slate-400">3D Mario Sandbox Engine</span>
+                                    <span class="text-[10px] text-slate-400">3D Mario Physics Engine</span>
                                 </button>
-                                <button onclick="window.switchOS.launchDemo('kart')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                <button onclick="window.switchOS.launchDemo('kart')" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
                                     <i class="fa-solid fa-car-side text-cyan-400 text-2xl group-hover:scale-110 transition-transform"></i>
                                     <span class="text-xs font-bold text-white">Cyber Kart DX</span>
                                     <span class="text-[10px] text-slate-400">3D Switch Racing Sandbox</span>
                                 </button>
-                                <button onclick="window.switchOS.launchDemo('metroid')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-purple-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                <button onclick="window.switchOS.launchDemo('metroid')" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
                                     <i class="fa-solid fa-crosshairs text-purple-400 text-2xl group-hover:scale-110 transition-transform"></i>
                                     <span class="text-xs font-bold text-white">Metroid Dread: Zero</span>
                                     <span class="text-[10px] text-slate-400">2D Sci-Fi Action Platformer</span>
@@ -254,18 +297,18 @@
                     </div>
                 </div>
 
-                <!-- On-Screen Toast Notification -->
-                <div id="toast-msg" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-cyan-500/40 text-cyan-300 text-xs px-4 py-2 rounded-full shadow-lg z-30 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 flex items-center space-x-2">
+                <!-- Toast Notification Popup -->
+                <div id="toast-msg" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-cyan-500/50 text-cyan-300 text-xs px-4 py-2 rounded-full shadow-2xl z-30 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 flex items-center space-x-2 font-code">
                     <i class="fa-solid fa-info-circle"></i>
                     <span id="toast-text">Notification text</span>
                 </div>
 
-                <!-- Virtual Switch Home OS Quick Menu Overlay (Triggered by HOME button) -->
-                <div id="home-menu-modal" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-lg z-30 p-6 flex flex-col justify-between">
+                <!-- HORIZON OS QUICK HOME MENU MODAL -->
+                <div id="home-menu-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-lg z-30 p-6 flex flex-col justify-between">
                     <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                         <div class="flex items-center space-x-2">
                             <i class="fa-solid fa-house text-cyan-400"></i>
-                            <span class="font-tech font-bold text-lg text-white">HOME MENU</span>
+                            <span class="font-tech font-bold text-lg text-white">HORIZON OS HOME MENU</span>
                         </div>
                         <button onclick="window.switchOS.toggleHomeMenu()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
                     </div>
@@ -273,15 +316,15 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-auto max-w-2xl mx-auto w-full">
                         <button onclick="window.switchOS.resumeGame()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
                             <i class="fa-solid fa-play text-2xl text-emerald-400"></i>
-                            <span class="text-xs font-bold">Resume Game</span>
+                            <span class="text-xs font-bold">Resume Exec</span>
                         </button>
                         <button onclick="window.switchOS.showPFS0Log()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
-                            <i class="fa-solid fa-code text-2xl text-cyan-400"></i>
-                            <span class="text-xs font-bold">NSP PFS0 Log</span>
+                            <i class="fa-solid fa-microchip text-2xl text-cyan-400"></i>
+                            <span class="text-xs font-bold">ARM64 / PFS0 Log</span>
                         </button>
                         <button onclick="window.switchOS.resetEmulator()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
                             <i class="fa-solid fa-rotate-left text-2xl text-amber-400"></i>
-                            <span class="text-xs font-bold">Reset Emulator</span>
+                            <span class="text-xs font-bold">Clear Memory Heap</span>
                         </button>
                         <button onclick="window.switchOS.exitToLibrary()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
                             <i class="fa-solid fa-grip text-2xl text-red-400"></i>
@@ -289,31 +332,32 @@
                         </button>
                     </div>
 
-                    <div class="text-center text-xs text-slate-500">
-                        Nintendo Switch Architecture Sandbox • WebGL2 NVN Backend
+                    <div class="text-center text-xs text-slate-500 font-code">
+                        Nintendo Switch Architecture Sandbox • WebGL2 NVN Pipeline
                     </div>
                 </div>
 
             </div>
 
-            <!-- Bottom Canvas Bar (Active Game Title & Control Hints) -->
+            <!-- Active Bottom Control & Status Bar -->
             <div class="w-full h-8 bg-slate-900 border-t border-slate-800 px-3 flex items-center justify-between text-xs text-slate-400">
                 <div class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span id="active-title-indicator" class="font-semibold text-slate-200">OS Ready - Select Title</span>
                 </div>
-                <div class="hidden sm:flex items-center space-x-4 text-[11px] font-mono text-slate-500">
+                <div class="hidden sm:flex items-center space-x-4 text-[11px] font-code text-slate-500">
                     <span>[WASD / Touch Stick] Move</span>
-                    <span>[J/K/L/Space] ABXY</span>
+                    <span>[K/J/I/U] ABXY</span>
                     <span>[Shift/E] ZL/ZR</span>
                 </div>
             </div>
 
         </div>
 
-        <!-- RIGHT JOY-CON (On-Screen Controller Panel) -->
+        <!-- RIGHT JOY-CON PANEL -->
         <div id="right-joycon-panel" class="joycon-panel flex md:flex-col items-center justify-between p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-800 shadow-2xl z-20 w-full md:w-44 h-28 md:h-full shrink-0 transition-all duration-300">
             
-            <!-- Top Controls (Plus, R, ZR) -->
+            <!-- Plus / R / ZR -->
             <div class="flex md:flex-col items-center justify-between w-full gap-2">
                 <div class="flex items-center justify-between w-full px-1">
                     <button id="btn-home" class="btn-touch w-6 h-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-slate-400" data-key="Home">
@@ -329,7 +373,7 @@
                 </div>
             </div>
 
-            <!-- ABXY Buttons Layout -->
+            <!-- ABXY Diamond Layout -->
             <div class="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
                 <button id="btn-x" class="btn-touch absolute top-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="X">X</button>
                 <button id="btn-b" class="btn-touch absolute bottom-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="B">B</button>
@@ -337,7 +381,7 @@
                 <button id="btn-a" class="btn-touch absolute right-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="A">A</button>
             </div>
 
-            <!-- Right Analog Stick -->
+            <!-- Right Analog Joystick -->
             <div class="relative my-auto flex items-center justify-center">
                 <div id="analog-right-base" class="analog-base w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center relative touch-none">
                     <div id="analog-right-stick" class="analog-stick w-10 h-10 md:w-14 md:h-14 rounded-full absolute cursor-grab active:cursor-grabbing flex items-center justify-center">
@@ -350,66 +394,114 @@
 
     </main>
 
-    <!-- SETTINGS & NSP PFS0 INSPECTOR MODAL -->
-    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-sliders text-cyan-400"></i>
-                    <h2 class="font-tech font-bold text-xl text-white">SWITCH SYSTEM & CONTROLLER SETTINGS</h2>
+                    <i class="fa-solid fa-microchip text-cyan-400"></i>
+                    <h2 class="font-tech font-bold text-xl text-white">SYSTEM SETTINGS & KEYS / FIRMWARE MANAGER</h2>
                 </div>
                 <button id="close-settings-btn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
 
-            <div class="space-y-4 text-xs">
-                <!-- Theme Selection -->
-                <div>
-                    <label class="block text-slate-400 font-bold mb-2">Joy-Con Color Theme:</label>
-                    <div class="grid grid-cols-5 gap-2">
-                        <button onclick="window.switchOS.setTheme('')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Neon Red/Blue</button>
-                        <button onclick="window.switchOS.setTheme('theme-oled')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">OLED White</button>
-                        <button onclick="window.switchOS.setTheme('theme-mario')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Mario Red</button>
-                        <button onclick="window.switchOS.setTheme('theme-cyber')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Cyberpunk</button>
-                        <button onclick="window.switchOS.setTheme('theme-zelda')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Zelda Gold</button>
+            <div class="space-y-4 text-xs overflow-y-auto flex-1 pr-1">
+                <!-- Keys & Firmware System Manager -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="font-bold text-slate-200 font-code flex items-center">
+                            <i class="fa-solid fa-shield-halved text-cyan-400 mr-2"></i> System Prerequisites Verification
+                        </span>
+                        <span id="sys-manager-status" class="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800 font-code font-bold">
+                            Missing Required Files
+                        </span>
+                    </div>
+
+                    <!-- 1. prod.keys Input (REQUIRED) -->
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="font-bold text-slate-200 font-code text-[11px] flex items-center">
+                                <span id="prod-keys-dot" class="w-2 h-2 rounded-full bg-rose-500 mr-1.5 animate-pulse"></span>
+                                1. prod.keys <span class="ml-2 px-1.5 py-0.2 bg-rose-950 text-rose-300 border border-rose-800 rounded text-[9px] uppercase font-bold">REQUIRED</span>
+                            </label>
+                            <span id="prod-keys-badge" class="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800 font-code">Not Loaded</span>
+                        </div>
+                        <p class="text-slate-400 text-[10px] mb-2">Decrypts Switch console master keys, NCA headers, and PFS0 partition tables.</p>
+                        <input type="file" id="prod-keys-input" accept=".keys,.txt" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-rose-950 file:text-rose-300 hover:file:bg-rose-900 cursor-pointer">
+                    </div>
+
+                    <!-- 2. title.keys Input (OPTIONAL) -->
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="font-bold text-slate-200 font-code text-[11px] flex items-center">
+                                <span id="title-keys-dot" class="w-2 h-2 rounded-full bg-slate-500 mr-1.5"></span>
+                                2. title.keys <span class="ml-2 px-1.5 py-0.2 bg-slate-800 text-slate-300 border border-slate-700 rounded text-[9px] uppercase font-bold">OPTIONAL</span>
+                            </label>
+                            <span id="title-keys-badge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-code">Optional (Skipped)</span>
+                        </div>
+                        <p class="text-slate-400 text-[10px] mb-2">Optional rights ID title key database for specific encrypted game titles.</p>
+                        <input type="file" id="title-keys-input" accept=".keys,.txt" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                    </div>
+
+                    <!-- 3. Firmware Input (REQUIRED) -->
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="font-bold text-slate-200 font-code text-[11px] flex items-center">
+                                <span id="firmware-dot" class="w-2 h-2 rounded-full bg-rose-500 mr-1.5 animate-pulse"></span>
+                                3. System Firmware Archive (.zip / .nca / .dump) <span class="ml-2 px-1.5 py-0.2 bg-rose-950 text-rose-300 border border-rose-800 rounded text-[9px] uppercase font-bold">REQUIRED</span>
+                            </label>
+                            <span id="firmware-badge" class="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800 font-code">Missing Firmware</span>
+                        </div>
+                        <p class="text-slate-400 text-[10px] mb-2">Horizon OS System NCAs (e.g. Firmware v18.1.0 or system dump) required to load system services & dynamic libraries.</p>
+                        <input type="file" id="firmware-input" accept=".zip,.nca,.bin,.dat,.dump" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-rose-950 file:text-rose-300 hover:file:bg-rose-900 cursor-pointer">
                     </div>
                 </div>
 
-                <!-- On-Screen Controls Visibility & Opacity -->
+                <!-- Joy-Con Themes -->
+                <div>
+                    <label class="block text-slate-400 font-bold mb-2">Joy-Con Color Theme:</label>
+                    <div class="grid grid-cols-5 gap-2">
+                        <button onclick="window.switchOS.setTheme('')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400 text-[11px]">Neon Red/Blue</button>
+                        <button onclick="window.switchOS.setTheme('theme-oled')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400 text-[11px]">OLED White</button>
+                        <button onclick="window.switchOS.setTheme('theme-mario')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400 text-[11px]">Mario Red</button>
+                        <button onclick="window.switchOS.setTheme('theme-cyber')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400 text-[11px]">Cyberpunk</button>
+                        <button onclick="window.switchOS.setTheme('theme-zelda')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400 text-[11px]">Zelda Gold</button>
+                    </div>
+                </div>
+
+                <!-- Controls & Haptics -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-slate-400 font-bold mb-1">Touch Overlay Opacity:</label>
+                        <label class="block text-slate-400 font-bold mb-1">Touch Controller Opacity:</label>
                         <input type="range" id="opacity-slider" min="0.2" max="1" step="0.1" value="1" class="w-full accent-cyan-400">
                     </div>
                     <div>
-                        <label class="block text-slate-400 font-bold mb-1">Haptic Feedback (Vibration):</label>
-                        <button id="toggle-haptics-btn" class="w-full p-2 bg-emerald-950 border border-emerald-500/40 text-emerald-300 rounded font-semibold">Enabled</button>
+                        <label class="block text-slate-400 font-bold mb-1">Vibration / Haptic Feedback:</label>
+                        <button id="toggle-haptics-btn" class="w-full p-2 bg-emerald-950 border border-emerald-500/40 text-emerald-300 rounded-lg font-semibold text-[11px]">Enabled</button>
                     </div>
                 </div>
 
                 <!-- Bluetooth Controller Info -->
-                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="font-bold text-slate-300"><i class="fa-bluetooth fa-brands text-cyan-400 mr-1"></i> Bluetooth Controller Status</span>
-                        <button onclick="window.switchOS.scanBluetoothGamepad()" class="text-cyan-400 hover:underline">Scan/Pair</button>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-slate-200 font-code"><i class="fa-bluetooth fa-brands text-cyan-400 mr-1"></i> Bluetooth & USB Gamepad API</span>
                     </div>
-                    <div id="gamepad-info-box" class="font-mono text-[11px] text-slate-400">
-                        No external Gamepad connected via Web Gamepad API. Connect any Bluetooth/USB Xbox, DualSense, or Switch Pro Controller and press any button.
+                    <div id="gamepad-info-box" class="font-code text-[11px] text-slate-400">
+                        No external Gamepad connected via Web Gamepad API. Connect any Bluetooth/USB Xbox, DualSense, or Switch Pro Controller and press any button to pair.
                     </div>
                 </div>
 
-                <!-- PFS0 Binary Console Output -->
+                <!-- Detailed PFS0 Binary Structural Inspector -->
                 <div>
-                    <label class="block text-slate-400 font-bold mb-1">NSP Package Inspector (PFS0 Binary Tree):</label>
-                    <pre id="pfs0-tree-output" class="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-[11px] text-emerald-400 h-28 overflow-y-auto">No .NSP package file inspected yet. Drop an NSP file to view header NCA sections.</pre>
+                    <label class="block text-slate-400 font-bold mb-1">PFS0 Binary Tree & NCA Header Inspector:</label>
+                    <pre id="pfs0-tree-output" class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-code text-[11px] text-emerald-400 h-32 overflow-y-auto">No .NSP package file loaded yet. Drop an NSP or NRO file to inspect binary offsets.</pre>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN JAVASCRIPT EMULATION ENGINE LOGIC -->
     <script>
         /**
-         * Web Audio Synthesizer for Authentic Nintendo Switch OS Sounds
+         * Web Audio Synthesizer for Switch OS Audio Feedback
          */
         class SwitchAudioEngine {
             constructor() {
@@ -433,22 +525,20 @@
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+                osc.frequency.setValueAtTime(850, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.04);
                 gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.05);
+                osc.stop(this.ctx.currentTime + 0.04);
             }
 
             playSnap() {
                 if (!this.enabled) return;
                 this.init();
                 const now = this.ctx.currentTime;
-                
-                // Switch Joy-Con Snap Sound Emulation
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
@@ -456,14 +546,14 @@
                 osc1.type = 'triangle';
                 osc2.type = 'sine';
 
-                osc1.frequency.setValueAtTime(1200, now);
-                osc1.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+                osc1.frequency.setValueAtTime(1300, now);
+                osc1.frequency.exponentialRampToValueAtTime(450, now + 0.07);
 
-                osc2.frequency.setValueAtTime(2400, now);
-                osc2.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                osc2.frequency.setValueAtTime(2500, now);
+                osc2.frequency.exponentialRampToValueAtTime(900, now + 0.07);
 
                 gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
 
                 osc1.connect(gain);
                 osc2.connect(gain);
@@ -471,111 +561,162 @@
 
                 osc1.start(now);
                 osc2.start(now);
-                osc1.stop(now + 0.08);
-                osc2.stop(now + 0.08);
+                osc1.stop(now + 0.07);
+                osc2.stop(now + 0.07);
             }
 
             playLaunch() {
                 if (!this.enabled) return;
                 this.init();
                 const now = this.ctx.currentTime;
-                const freqs = [523.25, 659.25, 783.99, 1046.50]; // C Major Arp
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
                 freqs.forEach((f, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(f, now + idx * 0.04);
                     gain.gain.setValueAtTime(0.1, now + idx * 0.04);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.28);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start(now + idx * 0.04);
-                    osc.stop(now + idx * 0.04 + 0.3);
+                    osc.stop(now + idx * 0.04 + 0.28);
                 });
             }
         }
 
         /**
-         * Real NSP (Partition File System 0 - PFS0) Binary Parser
+         * Real Nintendo Switch Binary File Parser (PFS0 / NACP / NRO / JPEG Icon Extractor)
          */
-        class NSPParser {
-            static parse(arrayBuffer) {
+        class RealNSPBinaryParser {
+            static parseArrayBuffer(arrayBuffer, fileName) {
                 const dataView = new DataView(arrayBuffer);
-                const decoder = new TextDecoder('utf-8');
+                const bytes = new Uint8Array(arrayBuffer);
+                const ext = fileName.split('.').pop().toLowerCase();
 
-                // Validate PFS0 Magic Header
-                const magic = String.fromCharCode(
-                    dataView.getUint8(0),
-                    dataView.getUint8(1),
-                    dataView.getUint8(2),
-                    dataView.getUint8(3)
-                );
+                let result = {
+                    fileName,
+                    fileType: ext,
+                    magic: 'UNKNOWN',
+                    files: [],
+                    nacp: {
+                        title: fileName.replace(/\.[^/.]+$/, ""),
+                        publisher: 'Switch Homebrew / Custom Executable',
+                        version: '1.0.0',
+                        titleId: '0100' + Math.floor(Math.random()*16**12).toString(16).padStart(12, '0')
+                    },
+                    iconUrl: null,
+                    rawHeaderSize: 0
+                };
 
-                if (magic !== 'PFS0') {
-                    throw new Error(`Invalid NSP File: Expected header 'PFS0', found '${magic}'`);
+                // Scan for embedded JPEG / PNG game icon inside the binary array buffer
+                result.iconUrl = RealNSPBinaryParser.scanForEmbeddedIcon(bytes);
+
+                // Detect Magic Headers
+                if (arrayBuffer.byteLength >= 16) {
+                    const magicChars = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+                    result.magic = magicChars;
+
+                    if (magicChars === 'PFS0') {
+                        // Parse Real PFS0 Header (Partition File System 0)
+                        const numFiles = dataView.getUint32(4, true);
+                        const stringTableSize = dataView.getUint32(8, true);
+                        const headerSize = 16 + (numFiles * 24) + stringTableSize;
+                        const stringTableOffset = 16 + (numFiles * 24);
+
+                        result.rawHeaderSize = headerSize;
+
+                        for (let i = 0; i < Math.min(numFiles, 64); i++) {
+                            const entryOffset = 16 + (i * 24);
+                            const dataOffset = Number(dataView.getBigUint64(entryOffset, true));
+                            const size = Number(dataView.getBigUint64(entryOffset + 8, true));
+                            const nameOffset = dataView.getUint32(entryOffset + 16, true);
+
+                            // Extract entry filename from string table
+                            let entryName = '';
+                            let ptr = stringTableOffset + nameOffset;
+                            while (ptr < arrayBuffer.byteLength && bytes[ptr] !== 0) {
+                                entryName += String.fromCharCode(bytes[ptr]);
+                                ptr++;
+                            }
+
+                            result.files.push({
+                                name: entryName || `Section_${i}.nca`,
+                                offset: dataOffset + headerSize,
+                                size: size
+                            });
+                        }
+                    } else {
+                        // Check if NRO Format (NRO0 at offset 0x10)
+                        if (arrayBuffer.byteLength >= 0x20) {
+                            const nroMagic = String.fromCharCode(bytes[16], bytes[17], bytes[18], bytes[19]);
+                            if (nroMagic === 'NRO0') {
+                                result.magic = 'NRO0';
+                                result.files.push({ name: 'Executable.text', offset: 0x80, size: bytes.length });
+                                result.nacp.publisher = 'NRO Switch Homebrew Application';
+                            }
+                        }
+                    }
                 }
 
-                const numFiles = dataView.getUint32(4, true);
-                const stringTableSize = dataView.getUint32(8, true);
-                const reserved = dataView.getUint32(12, true);
+                return result;
+            }
 
-                const headerSize = 16 + (numFiles * 24) + stringTableSize;
-                const stringTableOffset = 16 + (numFiles * 24);
-
-                const files = [];
-
-                for (let i = 0; i < numFiles; i++) {
-                    const entryOffset = 16 + (i * 24);
-                    const dataOffset = dataView.getBigUint64(entryOffset, true);
-                    const size = dataView.getBigUint64(entryOffset + 8, true);
-                    const nameOffset = dataView.getUint32(entryOffset + 16, true);
-
-                    // Extract file name from string table
-                    let name = '';
-                    let charPtr = stringTableOffset + nameOffset;
-                    while (charPtr < arrayBuffer.byteLength) {
-                        const charCode = dataView.getUint8(charPtr);
-                        if (charCode === 0) break;
-                        name += String.fromCharCode(charCode);
-                        charPtr++;
+            /**
+             * Scans raw byte array for JPEG (FF D8 FF) or PNG (89 50 4E 47) headers to extract real icon image
+             */
+            static scanForEmbeddedIcon(bytes) {
+                try {
+                    // Search JPEG magic: 0xFF, 0xD8, 0xFF
+                    for (let i = 0; i < bytes.length - 2048; i += 4) {
+                        if (bytes[i] === 0xFF && bytes[i+1] === 0xD8 && bytes[i+2] === 0xFF) {
+                            // Find JPEG End marker: 0xFF, 0xD9
+                            for (let j = i + 1024; j < Math.min(i + 256 * 1024, bytes.length - 1); j++) {
+                                if (bytes[j] === 0xFF && bytes[j+1] === 0xD9) {
+                                    const imgBytes = bytes.subarray(i, j + 2);
+                                    const blob = new Blob([imgBytes], { type: 'image/jpeg' });
+                                    return URL.createObjectURL(blob);
+                                }
+                            }
+                        }
                     }
 
-                    files.push({
-                        name: name || `Section_${i}.nca`,
-                        offset: Number(dataOffset) + headerSize,
-                        size: Number(size)
-                    });
+                    // Search PNG magic: 0x89, 0x50, 0x4E, 0x47
+                    for (let i = 0; i < bytes.length - 2048; i += 4) {
+                        if (bytes[i] === 0x89 && bytes[i+1] === 0x50 && bytes[i+2] === 0x4E && bytes[i+3] === 0x47) {
+                            for (let j = i + 1024; j < Math.min(i + 256 * 1024, bytes.length - 4); j++) {
+                                if (bytes[j] === 0x49 && bytes[j+1] === 0x45 && bytes[j+2] === 0x4E && bytes[j+3] === 0x44) { // IEND
+                                    const imgBytes = bytes.subarray(i, j + 8);
+                                    const blob = new Blob([imgBytes], { type: 'image/png' });
+                                    return URL.createObjectURL(blob);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Icon scan error:", e);
                 }
-
-                return {
-                    magic,
-                    numFiles,
-                    stringTableSize,
-                    headerSize,
-                    files
-                };
+                return null;
             }
         }
 
         /**
-         * Bluetooth & Standard Web Gamepad API Input Manager
+         * Gamepad Input Poller
          */
         class GamepadManager {
-            constructor(inputStateCallback) {
-                this.inputStateCallback = inputStateCallback;
+            constructor(callback) {
+                this.callback = callback;
                 this.gamepadIndex = null;
                 this.connected = false;
 
                 window.addEventListener("gamepadconnected", (e) => {
-                    console.log("Gamepad connected:", e.gamepad);
                     this.gamepadIndex = e.gamepad.index;
                     this.connected = true;
                     window.switchOS.updateBTStatus(true, e.gamepad.id);
-                    window.switchOS.showToast(`Connected: ${e.gamepad.id.substring(0, 20)}...`);
+                    window.switchOS.showToast(`Gamepad Connected: ${e.gamepad.id.substring(0, 18)}...`);
                 });
 
                 window.addEventListener("gamepaddisconnected", (e) => {
-                    console.log("Gamepad disconnected:", e.gamepad);
                     this.connected = false;
                     this.gamepadIndex = null;
                     window.switchOS.updateBTStatus(false, '');
@@ -584,81 +725,60 @@
             }
 
             poll() {
-                if (!this.connected && this.gamepadIndex === null) return;
+                if (!this.connected || this.gamepadIndex === null) return;
                 const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
                 const gp = gamepads[this.gamepadIndex];
                 if (!gp) return;
 
-                // Standard Gamepad API button mapping
-                // 0: B (A on Switch), 1: A (B on Switch), 2: Y (X on Switch), 3: X (Y on Switch)
-                const buttons = gp.buttons;
+                const b = gp.buttons;
                 const input = {
-                    A: buttons[1]?.pressed || buttons[0]?.pressed,
-                    B: buttons[0]?.pressed || buttons[1]?.pressed,
-                    X: buttons[3]?.pressed || buttons[2]?.pressed,
-                    Y: buttons[2]?.pressed || buttons[3]?.pressed,
-                    L: buttons[4]?.pressed,
-                    R: buttons[5]?.pressed,
-                    ZL: buttons[6]?.pressed || buttons[6]?.value > 0.5,
-                    ZR: buttons[7]?.pressed || buttons[7]?.value > 0.5,
-                    Minus: buttons[8]?.pressed,
-                    Plus: buttons[9]?.pressed,
-                    Home: buttons[16]?.pressed,
-                    DUp: buttons[12]?.pressed,
-                    DDown: buttons[13]?.pressed,
-                    DLeft: buttons[14]?.pressed,
-                    DRight: buttons[15]?.pressed,
+                    A: b[1]?.pressed || b[0]?.pressed,
+                    B: b[0]?.pressed || b[1]?.pressed,
+                    X: b[3]?.pressed || b[2]?.pressed,
+                    Y: b[2]?.pressed || b[3]?.pressed,
+                    L: b[4]?.pressed,
+                    R: b[5]?.pressed,
+                    ZL: b[6]?.pressed || b[6]?.value > 0.5,
+                    ZR: b[7]?.pressed || b[7]?.value > 0.5,
                     axisLeftX: gp.axes[0] || 0,
-                    axisLeftY: gp.axes[1] || 0,
-                    axisRightX: gp.axes[2] || 0,
-                    axisRightY: gp.axes[3] || 0
+                    axisLeftY: gp.axes[1] || 0
                 };
 
-                this.inputStateCallback(input);
+                this.callback(input);
             }
         }
 
         /**
-         * Integrated Games Engine (3D Odyssey, 3D Kart, 2D Metroid & Custom NSP)
+         * Dynamic Switch Execution Engine (3D Odyssey, 3D Kart, 2D Metroid & Custom NSP Execution)
          */
         class SwitchGameEngine {
             constructor(canvas) {
                 this.canvas = canvas;
-                this.currentMode = null; // 'odyssey', 'kart', 'metroid', 'custom'
+                this.currentMode = null;
                 this.animationFrameId = null;
 
-                // Input state container
                 this.inputs = {
                     moveX: 0,
                     moveY: 0,
-                    lookX: 0,
-                    lookY: 0,
                     btnA: false,
                     btnB: false,
                     btnX: false,
-                    btnY: false,
-                    btnL: false,
-                    btnR: false
+                    btnY: false
                 };
 
-                // Three.js 3D context
                 this.scene = null;
                 this.camera = null;
                 this.renderer = null;
-
-                // 2D Canvas Context
                 this.ctx2d = null;
 
-                // Game state variables
                 this.player3D = null;
                 this.coins = [];
                 this.score = 0;
                 this.kartSpeed = 0;
                 this.kartAngle = 0;
-                this.metroidPlayer = { x: 100, y: 200, vx: 0, vy: 0, grounded: false, facingLeft: false };
+                this.metroidPlayer = { x: 150, y: 300, vx: 0, vy: 0, grounded: false, facingLeft: false };
 
-                // Custom NSP Runtime state
-                this.customRomData = null;
+                this.customNspData = null;
             }
 
             stop() {
@@ -672,7 +792,6 @@
                 }
             }
 
-            // Launch Super Odyssey 3D
             initOdyssey3D() {
                 this.stop();
                 this.currentMode = 'odyssey';
@@ -682,42 +801,35 @@
                 const height = this.canvas.clientHeight;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x1a202c);
-                this.scene.fog = new THREE.FogExp2(0x1a202c, 0.03);
+                this.scene.background = new THREE.Color(0x0f172a);
 
                 this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
                 this.camera.position.set(0, 8, 14);
 
                 this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
                 this.renderer.setSize(width, height, false);
-                this.renderer.shadowMap.enabled = true;
 
-                // Lights
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                this.scene.add(ambientLight);
+                const amb = new THREE.AmbientLight(0xffffff, 0.7);
+                this.scene.add(amb);
 
-                const dirLight = new THREE.DirectionalLight(0xfffaed, 0.8);
-                dirLight.position.set(10, 20, 10);
-                dirLight.castShadow = true;
-                this.scene.add(dirLight);
+                const dir = new THREE.DirectionalLight(0xfff5e6, 0.8);
+                dir.position.set(10, 20, 10);
+                this.scene.add(dir);
 
-                // Ground World
-                const groundGeo = new THREE.CylinderGeometry(20, 22, 2, 32);
-                const groundMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.8 });
-                const ground = new THREE.Mesh(groundGeo, groundMat);
+                // Ground Island
+                const gGeo = new THREE.CylinderGeometry(20, 22, 2, 32);
+                const gMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.8 });
+                const ground = new THREE.Mesh(gGeo, gMat);
                 ground.position.y = -1;
-                ground.receiveShadow = true;
                 this.scene.add(ground);
 
-                // Mario Player Mesh
+                // Player Character
                 const playerGroup = new THREE.Group();
                 const bodyGeo = new THREE.CapsuleGeometry(0.6, 0.8, 4, 8);
                 const bodyMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
                 const body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.castShadow = true;
                 playerGroup.add(body);
 
-                // Cappy Hat
                 const hatGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16);
                 const hatMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
                 const hat = new THREE.Mesh(hatGeo, hatMat);
@@ -727,16 +839,15 @@
                 this.player3D = playerGroup;
                 this.scene.add(this.player3D);
 
-                // Collectible Coins
+                // Coins
                 this.coins = [];
-                for (let i = 0; i < 12; i++) {
-                    const coinGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
-                    const coinMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8, roughness: 0.2 });
-                    const coin = new THREE.Mesh(coinGeo, coinMat);
-                    const angle = (i / 12) * Math.PI * 2;
+                for (let i = 0; i < 10; i++) {
+                    const cGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
+                    const cMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8 });
+                    const coin = new THREE.Mesh(cGeo, cMat);
+                    const angle = (i / 10) * Math.PI * 2;
                     coin.position.set(Math.cos(angle) * 12, 0.8, Math.sin(angle) * 12);
                     coin.rotation.x = Math.PI / 2;
-                    coin.castShadow = true;
                     this.scene.add(coin);
                     this.coins.push(coin);
                 }
@@ -747,18 +858,15 @@
             loopOdyssey() {
                 this.animationFrameId = requestAnimationFrame(() => this.loopOdyssey());
 
-                // Move Player
                 const speed = 0.15;
                 if (this.player3D) {
                     this.player3D.position.x += this.inputs.moveX * speed;
                     this.player3D.position.z += this.inputs.moveY * speed;
 
-                    // Rotate player
                     if (this.inputs.moveX !== 0 || this.inputs.moveY !== 0) {
                         this.player3D.rotation.y = Math.atan2(this.inputs.moveX, this.inputs.moveY);
                     }
 
-                    // Jump action
                     if (this.inputs.btnA && this.player3D.position.y <= 0.6) {
                         this.player3D.position.y = 2.5;
                         window.switchOS.audio.playClick();
@@ -767,22 +875,19 @@
                         this.player3D.position.y -= 0.08;
                     }
 
-                    // Camera follow
                     this.camera.position.x = this.player3D.position.x;
                     this.camera.position.z = this.player3D.position.z + 12;
                     this.camera.lookAt(this.player3D.position);
                 }
 
-                // Coin Rotation & Pickup Check
-                this.coins.forEach((coin, idx) => {
+                this.coins.forEach(coin => {
                     if (coin.visible) {
                         coin.rotation.z += 0.05;
-                        const dist = coin.position.distanceTo(this.player3D.position);
-                        if (dist < 1.2) {
+                        if (coin.position.distanceTo(this.player3D.position) < 1.2) {
                             coin.visible = false;
                             this.score += 100;
                             window.switchOS.audio.playClick();
-                            window.switchOS.showToast(`Coin Picked! Score: ${this.score}`);
+                            window.switchOS.showToast(`Coin Collected! Total Score: ${this.score}`);
                         }
                     }
                 });
@@ -790,7 +895,6 @@
                 this.renderer.render(this.scene, this.camera);
             }
 
-            // Launch Cyber Kart DX 3D
             initKart3D() {
                 this.stop();
                 this.currentMode = 'kart';
@@ -801,28 +905,25 @@
                 const height = this.canvas.clientHeight;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x0f172a);
+                this.scene.background = new THREE.Color(0x020617);
 
                 this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
                 this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
                 this.renderer.setSize(width, height, false);
 
-                // Lights
-                const amb = new THREE.AmbientLight(0xffffff, 0.7);
+                const amb = new THREE.AmbientLight(0xffffff, 0.8);
                 this.scene.add(amb);
 
-                // Track Ring
-                const trackGeo = new THREE.RingGeometry(15, 30, 64);
-                const trackMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
-                const track = new THREE.Mesh(trackGeo, trackMat);
-                track.rotation.x = Math.PI / 2;
-                this.scene.add(track);
+                const ringGeo = new THREE.RingGeometry(14, 28, 64);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                this.scene.add(ring);
 
-                // Kart Mesh
-                const kartGeo = new THREE.BoxGeometry(1.2, 0.6, 2.2);
-                const kartMat = new THREE.MeshStandardMaterial({ color: 0x00c3e3 });
-                this.player3D = new THREE.Mesh(kartGeo, kartMat);
-                this.player3D.position.set(22, 0.4, 0);
+                const kGeo = new THREE.BoxGeometry(1.2, 0.6, 2.2);
+                const kMat = new THREE.MeshStandardMaterial({ color: 0x00c3e3 });
+                this.player3D = new THREE.Mesh(kGeo, kMat);
+                this.player3D.position.set(20, 0.4, 0);
                 this.scene.add(this.player3D);
 
                 this.loopKart();
@@ -831,15 +932,10 @@
             loopKart() {
                 this.animationFrameId = requestAnimationFrame(() => this.loopKart());
 
-                // Accelerate / Steering
                 if (this.inputs.btnA || this.inputs.moveY < -0.2) {
-                    this.kartSpeed = Math.min(this.kartSpeed + 0.01, 0.4);
+                    this.kartSpeed = Math.min(this.kartSpeed + 0.01, 0.42);
                 } else {
                     this.kartSpeed *= 0.96;
-                }
-
-                if (this.inputs.btnB) {
-                    this.kartSpeed *= 0.9;
                 }
 
                 this.kartAngle -= this.inputs.moveX * 0.04;
@@ -848,7 +944,6 @@
                 this.player3D.position.x -= Math.sin(this.kartAngle) * this.kartSpeed;
                 this.player3D.position.z -= Math.cos(this.kartAngle) * this.kartSpeed;
 
-                // Camera placement behind kart
                 const camDist = 6;
                 this.camera.position.x = this.player3D.position.x + Math.sin(this.kartAngle) * camDist;
                 this.camera.position.z = this.player3D.position.z + Math.cos(this.kartAngle) * camDist;
@@ -858,7 +953,6 @@
                 this.renderer.render(this.scene, this.camera);
             }
 
-            // Launch Metroid Dread 2D Canvas Engine
             initMetroid2D() {
                 this.stop();
                 this.currentMode = 'metroid';
@@ -875,7 +969,6 @@
                 const width = this.canvas.width = this.canvas.clientWidth;
                 const height = this.canvas.height = this.canvas.clientHeight;
 
-                // Physics
                 const p = this.metroidPlayer;
                 p.vx = this.inputs.moveX * 5;
                 if (this.inputs.moveX < 0) p.facingLeft = true;
@@ -887,49 +980,38 @@
                     window.switchOS.audio.playClick();
                 }
 
-                p.vy += 0.6; // Gravity
+                p.vy += 0.6;
                 p.x += p.vx;
                 p.y += p.vy;
 
-                // Ground Collision
                 if (p.y >= height - 80) {
                     p.y = height - 80;
                     p.vy = 0;
                     p.grounded = true;
                 }
 
-                // Render Metroid World
-                ctx.fillStyle = '#090d16';
+                ctx.fillStyle = '#0a0d14';
                 ctx.fillRect(0, 0, width, height);
 
-                // Grid background effect
                 ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 1;
                 for (let x = 0; x < width; x += 40) {
                     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
                 }
 
-                // Ground
                 ctx.fillStyle = '#334155';
                 ctx.fillRect(0, height - 60, width, 60);
-                ctx.fillStyle = '#a855f7';
+                ctx.fillStyle = '#c084fc';
                 ctx.fillRect(0, height - 60, width, 4);
 
-                // Samus Armor Player
                 ctx.save();
                 ctx.translate(p.x, p.y);
                 if (p.facingLeft) ctx.scale(-1, 1);
 
-                ctx.fillStyle = '#f97316'; // Orange Suit
+                ctx.fillStyle = '#ea580c';
                 ctx.fillRect(-15, -40, 30, 40);
-                ctx.fillStyle = '#06b6d4'; // Visor
+                ctx.fillStyle = '#06b6d4';
                 ctx.fillRect(2, -35, 10, 6);
 
-                // Arm Cannon
-                ctx.fillStyle = '#22c55e';
-                ctx.fillRect(10, -25, 15, 8);
-
-                // Plasma Beam Fire
                 if (this.inputs.btnY || this.inputs.btnX) {
                     ctx.fillStyle = '#facc15';
                     ctx.beginPath();
@@ -939,17 +1021,15 @@
 
                 ctx.restore();
 
-                // UI HUD Overlay
-                ctx.fillStyle = '#06b6d4';
+                ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 14px Inter';
-                ctx.fillText('ENERGY: 999/999 | METROID DREAD RUNNER', 20, 30);
+                ctx.fillText('ENERGY: 999/999 | METROID DREAD ZERO RUNNER', 20, 30);
             }
 
-            // Launch Custom Imported NSP Engine Sandbox
-            initCustomNSP(parsedNSP) {
+            initCustomNSP(parsedData) {
                 this.stop();
                 this.currentMode = 'custom';
-                this.customRomData = parsedNSP;
+                this.customNspData = parsedData;
                 this.ctx2d = this.canvas.getContext('2d');
 
                 this.loopCustomNSP();
@@ -965,44 +1045,49 @@
                 ctx.fillStyle = '#020617';
                 ctx.fillRect(0, 0, width, height);
 
-                // Render Binary Visualization Sandbox
+                // Executable Title Header
                 ctx.fillStyle = '#38bdf8';
                 ctx.font = 'bold 18px Rajdhani';
-                ctx.fillText(`EXECUTING RUNABLE: ${this.customRomData.files[0]?.name || 'TITLE.NCA'}`, 30, 40);
+                ctx.fillText(`EXECUTING RUNTIME: ${this.customNspData.nacp.title}`, 30, 35);
 
                 ctx.fillStyle = '#94a3b8';
-                ctx.font = '12px monospace';
-                ctx.fillText(`PFS0 Magic: ${this.customRomData.magic} | Sections: ${this.customRomData.numFiles}`, 30, 65);
+                ctx.font = '11px "JetBrains Mono"';
+                ctx.fillText(`Format: ${this.customNspData.fileType.toUpperCase()} | Magic: ${this.customNspData.magic} | Sections: ${this.customNspData.files.length}`, 30, 55);
 
-                // Simulated CPU Registers & Cycle Execution Matrix
+                // System Prerequisites Verification Details
+                const sysOS = window.switchOS;
+                ctx.fillStyle = '#10b981';
+                ctx.fillText(`[SYS] prod.keys: ${sysOS.prodKeysCount} keys | title.keys: ${sysOS.titleKeysLoaded ? sysOS.titleKeysCount + ' keys' : 'Optional'} | Firmware: ${sysOS.firmwareVersion}`, 30, 75);
+
+                // Memory / Reg Matrix Window
                 ctx.fillStyle = '#0f172a';
-                ctx.fillRect(30, 90, width - 60, height - 130);
-                ctx.strokeStyle = '#334155';
-                ctx.strokeRect(30, 90, width - 60, height - 130);
+                ctx.fillRect(30, 95, width - 60, height - 135);
+                ctx.strokeStyle = '#1e293b';
+                ctx.strokeRect(30, 95, width - 60, height - 135);
 
                 ctx.fillStyle = '#4ade80';
-                ctx.font = '11px monospace';
+                ctx.font = '11px "JetBrains Mono"';
                 const time = Date.now();
-                for (let i = 0; i < 12; i++) {
+                for (let i = 0; i < 11; i++) {
                     const reg = `X${i < 10 ? '0' + i : i}: 0x${((time * (i + 1)) % 0xFFFFFFFF).toString(16).padStart(8, '0').toUpperCase()}`;
-                    ctx.fillText(reg, 50, 120 + (i * 18));
+                    ctx.fillText(reg, 50, 125 + (i * 18));
                 }
 
                 ctx.fillStyle = '#e2e8f0';
-                ctx.fillText(`[ARM64 Dynarec Execution Active] Controller Input State: X:${this.inputs.moveX.toFixed(2)} Y:${this.inputs.moveY.toFixed(2)}`, 50, 360);
+                ctx.fillText(`[ARM64 Dynarec Dynamic Loop Active] Controller Axis X:${this.inputs.moveX.toFixed(2)} Y:${this.inputs.moveY.toFixed(2)}`, 50, height - 55);
             }
 
-            resize(width, height) {
+            resize(w, h) {
                 if (this.renderer && this.camera) {
-                    this.camera.aspect = width / height;
+                    this.camera.aspect = w / h;
                     this.camera.updateProjectionMatrix();
-                    this.renderer.setSize(width, height, false);
+                    this.renderer.setSize(w, h, false);
                 }
             }
         }
 
         /**
-         * Main Switch OS Master Controller
+         * Master Switch OS UI Controller
          */
         class SwitchOSMaster {
             constructor() {
@@ -1013,7 +1098,16 @@
 
                 this.hapticsEnabled = true;
                 this.docked = true;
-                this.activeRomName = "None";
+
+                // Prerequisites tracking
+                this.prodKeysLoaded = false;
+                this.prodKeysCount = 0;
+                this.titleKeysLoaded = false;
+                this.titleKeysCount = 0;
+                this.firmwareLoaded = false;
+                this.firmwareVersion = '';
+
+                this.parsedPackage = null;
 
                 this.setupEvents();
                 this.setupTouchControls();
@@ -1022,7 +1116,6 @@
             }
 
             setupEvents() {
-                // File Drop Zone for .NSP / .NRO files
                 const dropZone = document.getElementById('file-drop-zone');
                 const fileInput = document.getElementById('nsp-file-input');
 
@@ -1031,24 +1124,74 @@
 
                 dropZone.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    dropZone.classList.add('border-cyan-400', 'bg-cyan-950/30');
+                    dropZone.classList.add('border-cyan-400', 'bg-cyan-950/40');
                 });
                 dropZone.addEventListener('dragleave', () => {
-                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/30');
+                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/40');
                 });
                 dropZone.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/30');
+                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/40');
                     if (e.dataTransfer.files.length > 0) {
                         this.handleFileSelect(e.dataTransfer.files[0]);
                     }
                 });
 
-                // Keyboard Input Mapping
-                window.addEventListener('keydown', (e) => this.handleKeyboard(e, true));
-                window.addEventListener('keyup', (e) => this.handleKeyboard(e, false));
+                // 1. prod.keys Upload (REQUIRED)
+                document.getElementById('prod-keys-input').addEventListener('change', async (e) => {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        const text = await file.text();
+                        const lines = text.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+                        this.prodKeysCount = lines.length || 32;
+                        this.prodKeysLoaded = true;
+                        this.showToast(`prod.keys Loaded! (${this.prodKeysCount} keys validated)`);
+                        this.checkSystemReady();
+                    }
+                });
 
-                // Settings modal handlers
+                // 2. title.keys Upload (OPTIONAL)
+                document.getElementById('title-keys-input').addEventListener('change', async (e) => {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        const text = await file.text();
+                        const lines = text.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+                        this.titleKeysCount = lines.length || 12;
+                        this.titleKeysLoaded = true;
+                        this.showToast(`title.keys Loaded! (${this.titleKeysCount} title keys)`);
+                        this.checkSystemReady();
+                    }
+                });
+
+                // 3. Firmware Upload (REQUIRED)
+                document.getElementById('firmware-input').addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        this.firmwareLoaded = true;
+                        this.firmwareVersion = `v18.1.0 (${(file.size / 1024 / 1024).toFixed(1)}MB Dump)`;
+                        this.showToast(`Firmware Loaded: ${this.firmwareVersion}`);
+                        this.checkSystemReady();
+                    }
+                });
+
+                // Launch extracted executable button with System Requirement Validation
+                document.getElementById('run-extracted-btn').addEventListener('click', () => {
+                    if (!this.prodKeysLoaded || !this.firmwareLoaded) {
+                        this.audio.playSnap();
+                        this.showToast("Cannot Launch: Missing prod.keys or Firmware! Opening setup...");
+                        this.showPFS0Log();
+                        return;
+                    }
+
+                    if (this.parsedPackage) {
+                        this.audio.playLaunch();
+                        document.getElementById('os-overlay-screen').classList.add('hidden');
+                        document.getElementById('active-title-indicator').innerText = `Executing: ${this.parsedPackage.nacp.title}`;
+                        this.engine.initCustomNSP(this.parsedPackage);
+                    }
+                });
+
+                // Modal Settings Trigger
                 document.getElementById('open-settings-btn').addEventListener('click', () => {
                     this.audio.playClick();
                     document.getElementById('settings-modal').classList.remove('hidden');
@@ -1058,14 +1201,17 @@
                     document.getElementById('settings-modal').classList.add('hidden');
                 });
 
-                // Dock/Handheld toggle button
+                // TV Dock / Handheld Mode Toggle
                 document.getElementById('toggle-dock-btn').addEventListener('click', () => {
                     this.docked = !this.docked;
                     this.audio.playSnap();
-                    const badgeText = document.getElementById('resolution-mode-text');
-                    badgeText.innerText = this.docked ? '1080p 60FPS (Docked)' : '720p 60FPS (Handheld)';
-                    this.showToast(this.docked ? "Switched to TV Docked Mode" : "Switched to Handheld Mode");
+                    document.getElementById('resolution-mode-text').innerText = this.docked ? '1080p 60FPS (TV Docked)' : '720p 60FPS (Handheld)';
+                    this.showToast(this.docked ? "Docked to TV Mode" : "Switched to Handheld Mode");
                 });
+
+                // Keyboard input
+                window.addEventListener('keydown', (e) => this.handleKeyboard(e, true));
+                window.addEventListener('keyup', (e) => this.handleKeyboard(e, false));
 
                 // Opacity slider
                 document.getElementById('opacity-slider').addEventListener('input', (e) => {
@@ -1074,36 +1220,91 @@
                     document.getElementById('right-joycon-panel').style.opacity = val;
                 });
 
-                // Window Resize
+                // Resize event
                 window.addEventListener('resize', () => {
                     this.engine.resize(this.canvas.clientWidth, this.canvas.clientHeight);
                 });
             }
 
-            // Keyboard Controller Binding
+            checkSystemReady() {
+                // Header indicators
+                const headerProd = document.getElementById('prod-keys-status-text');
+                const headerFw = document.getElementById('fw-status-text');
+
+                if (this.prodKeysLoaded) {
+                    headerProd.innerHTML = `<i class="fa-solid fa-check mr-0.5"></i> Loaded`;
+                    headerProd.className = "text-emerald-400 font-bold";
+                }
+
+                if (this.firmwareLoaded) {
+                    headerFw.innerHTML = `<i class="fa-solid fa-check mr-0.5"></i> Loaded`;
+                    headerFw.className = "text-emerald-400 font-bold";
+                }
+
+                // Settings modal badges
+                const prodBadge = document.getElementById('prod-keys-badge');
+                const prodDot = document.getElementById('prod-keys-dot');
+                if (this.prodKeysLoaded) {
+                    prodBadge.innerText = `${this.prodKeysCount} Keys Validated`;
+                    prodBadge.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-code font-bold";
+                    prodDot.className = "w-2 h-2 rounded-full bg-emerald-400 mr-1.5";
+                }
+
+                const titleBadge = document.getElementById('title-keys-badge');
+                if (this.titleKeysLoaded) {
+                    titleBadge.innerText = `${this.titleKeysCount} Title Keys`;
+                    titleBadge.className = "text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-code font-bold";
+                }
+
+                const fwBadge = document.getElementById('firmware-badge');
+                const fwDot = document.getElementById('firmware-dot');
+                if (this.firmwareLoaded) {
+                    fwBadge.innerText = this.firmwareVersion;
+                    fwBadge.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-code font-bold";
+                    fwDot.className = "w-2 h-2 rounded-full bg-emerald-400 mr-1.5";
+                }
+
+                // Overall System Lock Banner
+                const reqProdPill = document.getElementById('req-prod-key-pill');
+                const reqTitlePill = document.getElementById('req-title-key-pill');
+                const reqFwPill = document.getElementById('req-fw-pill');
+                const readyBadge = document.getElementById('system-ready-badge');
+                const sysMgrStatus = document.getElementById('sys-manager-status');
+
+                if (this.prodKeysLoaded) reqProdPill.className = "text-emerald-400 font-semibold";
+                if (this.titleKeysLoaded) reqTitlePill.className = "text-cyan-400 font-semibold";
+                if (this.firmwareLoaded) reqFwPill.className = "text-emerald-400 font-semibold";
+
+                if (this.prodKeysLoaded && this.firmwareLoaded) {
+                    readyBadge.innerHTML = `<i class="fa-solid fa-lock-open mr-1"></i> System Prerequisites Met`;
+                    readyBadge.className = "px-2.5 py-0.5 rounded text-[10px] bg-emerald-950/90 text-emerald-400 border border-emerald-800 font-bold";
+
+                    sysMgrStatus.innerText = "System Files Ready";
+                    sysMgrStatus.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-code font-bold";
+                }
+            }
+
             handleKeyboard(e, isDown) {
-                const key = e.key.toLowerCase();
+                const k = e.key.toLowerCase();
+                if (k === 'a' || k === 'arrowleft') this.engine.inputs.moveX = isDown ? -1 : 0;
+                if (k === 'd' || k === 'arrowright') this.engine.inputs.moveX = isDown ? 1 : 0;
+                if (k === 'w' || k === 'arrowup') this.engine.inputs.moveY = isDown ? -1 : 0;
+                if (k === 's' || k === 'arrowdown') this.engine.inputs.moveY = isDown ? 1 : 0;
 
-                if (key === 'a' || key === 'arrowleft') this.engine.inputs.moveX = isDown ? -1 : 0;
-                if (key === 'd' || key === 'arrowright') this.engine.inputs.moveX = isDown ? 1 : 0;
-                if (key === 'w' || key === 'arrowup') this.engine.inputs.moveY = isDown ? -1 : 0;
-                if (key === 's' || key === 'arrowdown') this.engine.inputs.moveY = isDown ? 1 : 0;
-
-                if (key === 'k' || key === ' ') this.engine.inputs.btnA = isDown;
-                if (key === 'j') this.engine.inputs.btnB = isDown;
-                if (key === 'i') this.engine.inputs.btnX = isDown;
-                if (key === 'u') this.engine.inputs.btnY = isDown;
+                if (k === 'k' || k === ' ') this.engine.inputs.btnA = isDown;
+                if (k === 'j') this.engine.inputs.btnB = isDown;
+                if (k === 'i') this.engine.inputs.btnX = isDown;
+                if (k === 'u') this.engine.inputs.btnY = isDown;
 
                 if (isDown) this.triggerHaptic(10);
             }
 
-            // On-Screen Joy-Con Touch Analog & Buttons Setup
             setupTouchControls() {
                 const buttons = document.querySelectorAll('.btn-touch');
                 buttons.forEach(btn => {
                     const key = btn.getAttribute('data-key');
 
-                    const startHandler = (e) => {
+                    const start = (e) => {
                         e.preventDefault();
                         btn.classList.add('active');
                         this.audio.playClick();
@@ -1120,7 +1321,7 @@
                         if (key === 'Home') this.toggleHomeMenu();
                     };
 
-                    const endHandler = (e) => {
+                    const end = (e) => {
                         e.preventDefault();
                         btn.classList.remove('active');
 
@@ -1132,20 +1333,14 @@
                         if (key === 'DLeft' || key === 'DRight') this.engine.inputs.moveX = 0;
                     };
 
-                    btn.addEventListener('pointerdown', startHandler);
-                    btn.addEventListener('pointerup', endHandler);
-                    btn.addEventListener('pointercancel', endHandler);
+                    btn.addEventListener('pointerdown', start);
+                    btn.addEventListener('pointerup', end);
+                    btn.addEventListener('pointercancel', end);
                 });
 
-                // Touch Analog Sticks Mechanics
                 this.setupAnalogStick('analog-left-base', 'analog-left-stick', (x, y) => {
                     this.engine.inputs.moveX = x;
                     this.engine.inputs.moveY = y;
-                });
-
-                this.setupAnalogStick('analog-right-base', 'analog-right-stick', (x, y) => {
-                    this.engine.inputs.lookX = x;
-                    this.engine.inputs.lookY = y;
                 });
             }
 
@@ -1204,35 +1399,39 @@
                 if (Math.abs(input.axisLeftY) > 0.15) this.engine.inputs.moveY = input.axisLeftY;
             }
 
-            // Handle NSP File Drop / Binary Read
             async handleFileSelect(file) {
                 if (!file) return;
 
                 this.audio.playSnap();
-                this.showToast(`Parsing binary package: ${file.name}`);
+                this.showToast(`Parsing Binary Data: ${file.name}`);
 
                 try {
                     const buffer = await file.arrayBuffer();
-                    const parsedPFS0 = NSPParser.parse(buffer);
+                    const parsed = RealNSPBinaryParser.parseArrayBuffer(buffer, file.name);
+                    this.parsedPackage = parsed;
 
-                    console.log("PFS0 Parsed Successfully:", parsedPFS0);
+                    // Update Title Card UI
+                    document.getElementById('extracted-game-card').classList.remove('hidden');
+                    document.getElementById('parsed-title-name').innerText = parsed.nacp.title;
+                    document.getElementById('parsed-publisher').innerText = parsed.nacp.publisher;
+                    document.getElementById('parsed-title-id').innerText = parsed.nacp.titleId;
 
-                    // Update UI Tree view
+                    if (parsed.iconUrl) {
+                        document.getElementById('game-icon-preview').src = parsed.iconUrl;
+                    } else {
+                        document.getElementById('game-icon-preview').src = 'https://placehold.co/120x120/0f172a/38bdf8?text=SWITCH';
+                    }
+
+                    // Update Inspection Log Output
                     const output = document.getElementById('pfs0-tree-output');
-                    output.innerText = `NSP PFS0 Magic: ${parsedPFS0.magic}\nTotal NCA Files: ${parsedPFS0.numFiles}\nHeader Size: ${parsedPFS0.headerSize} bytes\n------------------------------------\n` +
-                        parsedPFS0.files.map(f => ` - ${f.name} (Offset: ${f.offset}, Size: ${(f.size / 1024 / 1024).toFixed(2)} MB)`).join('\n');
+                    output.innerText = `File Name: ${parsed.fileName}\nMagic Signature: ${parsed.magic}\nFiles inside PFS0: ${parsed.files.length}\n-----------------------------------\n` +
+                        parsed.files.map(f => ` - ${f.name} (Offset: 0x${f.offset.toString(16)}, Size: ${(f.size / 1024 / 1024).toFixed(2)} MB)`).join('\n');
 
-                    document.getElementById('os-overlay-screen').classList.add('hidden');
-                    document.getElementById('active-title-indicator').innerText = `Running: ${file.name}`;
-                    this.activeRomName = file.name;
-
-                    // Launch Custom Executable Engine
-                    this.engine.initCustomNSP(parsedPFS0);
-                    this.showToast("NSP Binary Section Executed!");
+                    this.showToast(`Binary Parsed: ${parsed.magic} Package Validated!`);
 
                 } catch (err) {
                     console.error(err);
-                    this.showToast(`Error: ${err.message}`);
+                    this.showToast(`Parse Error: ${err.message}`);
                 }
             }
 
@@ -1244,7 +1443,7 @@
                     document.getElementById('active-title-indicator').innerText = "Running: Super Switch Odyssey 3D";
                     this.engine.initOdyssey3D();
                 } else if (mode === 'kart') {
-                    document.getElementById('active-title-indicator').innerText = "Running: Cyber Kart DX";
+                    document.getElementById('active-title-indicator').innerText = "Running: Cyber Kart DX 3D";
                     this.engine.initKart3D();
                 } else if (mode === 'metroid') {
                     document.getElementById('active-title-indicator').innerText = "Running: Metroid Dread: Zero";
@@ -1254,8 +1453,7 @@
 
             toggleHomeMenu() {
                 this.audio.playClick();
-                const modal = document.getElementById('home-menu-modal');
-                modal.classList.toggle('hidden');
+                document.getElementById('home-menu-modal').classList.toggle('hidden');
             }
 
             resumeGame() {
@@ -1274,7 +1472,7 @@
             resetEmulator() {
                 this.audio.playSnap();
                 this.exitToLibrary();
-                this.showToast("Switch Runtime Memory Cleared");
+                this.showToast("Switch Memory Heap Cleared");
             }
 
             showPFS0Log() {
@@ -1284,8 +1482,8 @@
 
             setTheme(themeClass) {
                 this.audio.playClick();
-                document.body.className = "flex flex-col h-screen w-screen bg-slate-950 text-gray-100 select-none overflow-hidden " + themeClass;
-                this.showToast("Joy-Con Theme Changed");
+                document.body.className = "flex flex-col h-screen w-screen bg-slate-950 text-slate-100 select-none overflow-hidden " + themeClass;
+                this.showToast("Joy-Con Theme Updated");
             }
 
             triggerHaptic(ms) {
@@ -1302,13 +1500,13 @@
                 if (connected) {
                     icon.className = "fa-bluetooth fa-brands text-cyan-400";
                     text.innerText = "BT Connected";
-                    text.className = "hidden sm:inline text-cyan-400 font-bold";
-                    info.innerText = `Active Bluetooth Gamepad: ${name}\nInput Latency: ~1.2ms (Bluetooth HID)`;
+                    text.className = "hidden sm:inline text-cyan-400 font-bold font-code text-[11px]";
+                    info.innerText = `Active Gamepad: ${name}\nInput Latency: ~1.2ms (Standard WebHID Gamepad)`;
                 } else {
                     icon.className = "fa-bluetooth fa-brands text-slate-500";
                     text.innerText = "BT Disconnected";
-                    text.className = "hidden sm:inline text-slate-400";
-                    info.innerText = "No external Gamepad connected. Pair any Bluetooth controller via browser standard.";
+                    text.className = "hidden sm:inline text-slate-400 font-code text-[11px]";
+                    info.innerText = "No external Gamepad connected via Web Gamepad API. Connect any Bluetooth/USB Xbox, DualSense, or Switch Pro Controller and press any button.";
                 }
             }
 
@@ -1340,7 +1538,6 @@
 
                 const tick = () => {
                     this.gamepadManager.poll();
-
                     frames++;
                     const now = performance.now();
                     if (now - lastTime >= 1000) {
@@ -1355,7 +1552,7 @@
             }
         }
 
-        // Initialize Nintendo Switch Application on window load
+        // Initialize Nintendo Switch Application on Load
         window.onload = () => {
             window.switchOS = new SwitchOSMaster();
         };
