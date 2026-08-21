@@ -2,576 +2,1854 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Roblox 2D Mobile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roblox 2D Multiverse - Baseplate, TOH, Obby, Garden & Mining</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            roblox: {
+              bg: '#F2F4F5',
+              card: '#FFFFFF',
+              cardHover: '#F8F9FA',
+              sidebar: '#FFFFFF',
+              header: '#232527',
+              accent: '#00A2FF',
+              playBtn: '#00B06F',
+              playBtnHover: '#009E63',
+              darkBorder: '#E3E5E8',
+              textMain: '#191B1D',
+              textMuted: '#656668',
+              studGrey: '#A3A2A5'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Fredoka', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
+    body {
+      background-color: #F2F4F5;
+      color: #191B1D;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
       user-select: none;
-      margin: 0;
-      padding: 0;
     }
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #0d0e12;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
+    ::-webkit-scrollbar-track {
+      background: #F2F4F5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C3C5C8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A1A3A6;
+    }
+
     canvas {
+      image-rendering: pixelated;
       display: block;
-      width: 100vw;
-      height: 100vh;
-      touch-action: none;
     }
 
-    /* UI Overlay */
-    .ui-top-bar {
-      position: absolute;
-      top: env(safe-area-inset-top, 16px);
-      left: 16px;
-      right: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-      pointer-events: none;
+    .roblox-shadow {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
-    .hud-badge {
-      background: rgba(22, 26, 35, 0.85);
-      backdrop-filter: blur(12px);
-      color: #ffffff;
-      padding: 10px 18px;
-      border-radius: 24px;
-      font-weight: 800;
-      font-size: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    .hud-badge span { color: #ffd700; }
-    .btn {
-      pointer-events: auto;
-      background: #00a2ff;
-      border: none;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 24px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0,162,255,0.4);
-      transition: transform 0.1s, background 0.2s;
-    }
-    .btn:active { transform: scale(0.92); }
 
-    /* Touch Controls */
-    .touch-controls {
-      position: absolute;
-      bottom: env(safe-area-inset-bottom, 20px);
-      left: 0;
-      width: 100%;
-      height: 180px;
-      pointer-events: none;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 30px;
+    .game-card-img {
+      transition: transform 0.2s ease, filter 0.2s ease;
     }
-    .joystick-zone {
-      width: 140px;
-      height: 140px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      border-radius: 50%;
-      position: relative;
-      pointer-events: auto;
-      touch-action: none;
+    .game-card:hover .game-card-img {
+      transform: scale(1.03);
     }
-    .joystick-knob {
-      width: 54px;
-      height: 54px;
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 50%;
-      position: absolute;
-      top: 41px;
-      left: 41px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      pointer-events: none;
-    }
-    .jump-btn {
-      width: 86px;
-      height: 86px;
-      background: rgba(0, 162, 255, 0.75);
-      border: 3px solid rgba(255, 255, 255, 0.85);
-      border-radius: 50%;
-      pointer-events: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      font-weight: 900;
-      font-size: 18px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-      touch-action: none;
-    }
-    .jump-btn:active { transform: scale(0.88); background: rgba(0, 162, 255, 0.95); }
-
-    /* Customization Modal */
-    .modal-overlay {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    .modal-card {
-      background: #181b22;
-      border: 1px solid rgba(255,255,255,0.15);
-      width: 100%;
-      max-width: 440px;
-      max-height: 80vh;
-      border-radius: 24px;
-      padding: 24px;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-    }
-    .modal-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 20px;
-      font-weight: 800;
-    }
-    .close-btn {
-      background: #ff4757;
-      border: none;
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .section-label { font-size: 14px; font-weight: 700; color: #8a94a6; margin-top: 8px; }
-    .swatch-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-    .color-swatch {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      border: 2px solid transparent;
-      cursor: pointer;
-    }
-    .color-swatch.active { border-color: #00a2ff; transform: scale(1.08); }
-    .item-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .shop-item {
-      background: #222733;
-      padding: 12px;
-      border-radius: 14px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid rgba(255,255,255,0.05);
-      cursor: pointer;
-    }
-    .shop-item.equipped { border-color: #2ed573; background: rgba(46, 213, 115, 0.15); }
   </style>
 </head>
-<body>
+<body class="bg-roblox-bg text-roblox-textMain min-h-screen flex flex-col antialiased">
 
-  <!-- Game Canvas -->
-  <canvas id="gameCanvas"></canvas>
+  <script>
+    class RobloxAudio {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+      playClick() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+      playJump() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(480, this.ctx.currentTime + 0.16);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.16);
+      }
+      playOof() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.28);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 0.28);
+      }
+      playCoil() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(950, this.ctx.currentTime + 0.14);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.14);
+      }
+      playCoin() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(988, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(1318, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+      playMine() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+      }
+      playWater() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+      playSword() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(900, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+      playWin() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.3);
+        });
+      }
+    }
+    const sfx = new RobloxAudio();
+  </script>
 
-  <!-- HUD Overlay -->
-  <div class="ui-top-bar">
-    <div class="hud-badge">STUDS: <span id="studCount">0</span></div>
-    <button class="btn" onclick="toggleModal(true)">Avatar Shop</button>
-  </div>
-
-  <!-- Mobile Controls -->
-  <div class="touch-controls">
-    <div class="joystick-zone" id="joystickZone">
-      <div class="joystick-knob" id="joystickKnob"></div>
+  <div id="boot-screen" class="fixed inset-0 z-50 bg-[#111214] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="relative w-24 h-24 mb-6 animate-bounce">
+      <div class="w-20 h-20 bg-white rounded-xl transform -rotate-12 flex items-center justify-center shadow-2xl relative">
+        <div class="w-8 h-8 bg-[#111214] rounded-md transform rotate-6"></div>
+      </div>
     </div>
-    <div class="jump-btn" id="jumpBtn">JUMP</div>
+    <h1 class="text-2xl font-bold font-display tracking-wide text-white mb-2">ROBLOX</h1>
+    <div class="w-64 bg-gray-800 h-2.5 rounded-full overflow-hidden mb-3">
+      <div id="boot-progress-bar" class="bg-roblox-accent h-full w-0 transition-all duration-300 ease-out"></div>
+    </div>
+    <p id="boot-status-text" class="text-xs text-gray-400 font-medium tracking-wide">Connecting to Roblox servers...</p>
   </div>
 
-  <!-- Avatar Customize Modal -->
-  <div class="modal-overlay" id="customizerModal">
-    <div class="modal-card">
-      <div class="modal-title">
-        <span>Avatar Editor</span>
-        <button class="close-btn" onclick="toggleModal(false)">✕</button>
+  <header id="roblox-header" class="hidden bg-roblox-header border-b border-[#393B3D] h-14 sticky top-0 z-40 px-4 flex items-center justify-between text-white">
+    <div class="flex items-center space-x-6">
+      <button onclick="navTo('home')" class="flex items-center space-x-2 group">
+        <div class="w-7 h-7 bg-white rounded-md transform -rotate-12 flex items-center justify-center transition-transform group-hover:scale-105">
+          <div class="w-2.5 h-2.5 bg-roblox-header rounded-sm transform rotate-6"></div>
+        </div>
+      </button>
+      <nav class="hidden md:flex items-center space-x-5 text-sm font-semibold text-gray-300">
+        <button onclick="navTo('home')" class="hover:text-white transition-colors">Discover</button>
+        <button onclick="openAvatarModal()" class="hover:text-white transition-colors">Avatar Shop</button>
+        <button onclick="navTo('home')" class="hover:text-white transition-colors">Create</button>
+        <button onclick="navTo('home')" class="hover:text-white transition-colors">Robux</button>
+      </nav>
+    </div>
+
+    <div class="flex-1 max-w-md mx-4 hidden sm:block">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-gray-400"></i>
+        <input type="text" placeholder="Search experiences, avatars, users..." class="w-full bg-[#111214] border border-[#393B3D] rounded-lg py-1.5 pl-9 pr-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-roblox-accent transition-colors">
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-1.5 bg-[#111214] px-3 py-1 rounded-full border border-[#393B3D] text-xs font-bold text-white" title="Robux Balance">
+        <div class="w-3.5 h-3.5 border-2 border-white transform rotate-12 flex items-center justify-center">
+          <div class="w-1 h-1 bg-white"></div>
+        </div>
+        <span id="robux-count" class="ml-1">1,250</span>
+      </div>
+      <button onclick="openAvatarModal('accessories')" class="flex items-center space-x-2 bg-[#111214] hover:bg-[#2B2D30] border border-[#393B3D] p-1.5 rounded-full transition-colors" title="Avatar Shop">
+        <div id="header-avatar-preview" class="w-6 h-6 rounded-full bg-yellow-400 border border-white flex items-center justify-center text-[10px] font-bold text-black">
+          R
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <main id="page-home" class="hidden flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+    <!-- Left Sidebar Nav -->
+    <aside class="hidden md:block md:col-span-3 lg:col-span-2 space-y-1 text-sm font-semibold">
+      <button onclick="navTo('home')" class="w-full flex items-center space-x-3 px-3 py-2.5 bg-roblox-card text-roblox-textMain rounded-lg border border-roblox-darkBorder roblox-shadow">
+        <i class="fa-solid fa-house text-roblox-accent"></i>
+        <span>Home</span>
+      </button>
+      <button onclick="openAvatarModal('accessories')" class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
+        <i class="fa-solid fa-store text-amber-500"></i>
+        <span>Avatar Shop</span>
+      </button>
+      <button onclick="openAvatarModal('colors')" class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
+        <i class="fa-solid fa-user-gear"></i>
+        <span>Avatar</span>
+      </button>
+      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
+        <i class="fa-solid fa-message"></i>
+        <span>Messages</span>
+      </button>
+      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
+        <i class="fa-solid fa-users"></i>
+        <span>Friends</span>
+      </button>
+      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
+        <i class="fa-solid fa-box"></i>
+        <span>Inventory</span>
+      </button>
+    </aside>
+
+    <!-- Main Content Area -->
+    <section class="col-span-1 md:col-span-9 lg:col-span-10 space-y-6">
+      <!-- Player Welcome Banner -->
+      <div class="bg-white border border-roblox-darkBorder p-5 rounded-2xl flex items-center justify-between roblox-shadow">
+        <div class="flex items-center space-x-4">
+          <div id="welcome-avatar-thumb" class="w-14 h-14 rounded-2xl bg-yellow-400 border-2 border-gray-300 flex items-center justify-center text-xl font-black shadow-md text-black">
+            R
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-xl md:text-2xl font-bold text-roblox-textMain">Welcome back, <span id="player-display-name">Player1</span></h2>
+              <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-300">Online</span>
+            </div>
+            <p class="text-xs text-roblox-textMuted mt-1">Play Baseplate, Tower of Hell, Obby, Grow a Garden, & Mining Simulator!</p>
+          </div>
+        </div>
+        <button onclick="openAvatarModal()" class="hidden sm:flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-roblox-textMain border border-roblox-darkBorder px-4 py-2 rounded-xl text-xs font-bold transition">
+          <i class="fa-solid fa-shirt"></i>
+          <span>Customize Avatar</span>
+        </button>
       </div>
 
-      <div class="section-label">TORSO COLOR</div>
-      <div class="swatch-grid" id="torsoColors"></div>
+      <!-- Featured Games Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-bold text-roblox-textMain flex items-center space-x-2">
+            <i class="fa-solid fa-fire text-orange-500"></i>
+            <span>Top Roblox Experiences</span>
+          </h3>
+          <span class="text-xs font-semibold text-roblox-accent hover:underline cursor-pointer">See All</span>
+        </div>
 
-      <div class="section-label">LEGS COLOR</div>
-      <div class="swatch-grid" id="legColors"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <!-- 1. Classic Baseplate -->
+          <div onclick="openGameDetails('baseplate')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
+            <div class="relative aspect-square bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+              <div class="relative text-center p-2">
+                <i class="fa-solid fa-cubes text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
+                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-sky-100 bg-black/30 px-2 py-0.5 rounded-full">Classic Sandbox</div>
+              </div>
+            </div>
+            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">[2048x16] Classic Baseplate</h4>
+            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
+              <span>98%</span>
+              <span class="mx-1">•</span>
+              <i class="fa-solid fa-user text-gray-400"></i>
+              <span>12.4K</span>
+            </p>
+          </div>
 
-      <div class="section-label">HATS & ACCESSORIES</div>
-      <div class="item-grid" id="hatItems"></div>
+          <!-- 2. Tower of Hell (TOH) -->
+          <div onclick="openGameDetails('toh')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
+            <div class="relative aspect-square bg-gradient-to-br from-purple-600 via-pink-600 to-red-500 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+              <div class="relative text-center p-2">
+                <i class="fa-solid fa-tower-observation text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
+                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-pink-100 bg-black/30 px-2 py-0.5 rounded-full">Tower Parkour</div>
+              </div>
+            </div>
+            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Tower of Hell (TOH)</h4>
+            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
+              <span>96%</span>
+              <span class="mx-1">•</span>
+              <i class="fa-solid fa-user text-gray-400"></i>
+              <span>48.9K</span>
+            </p>
+          </div>
+
+          <!-- 3. Super Mega Easy Obby -->
+          <div onclick="openGameDetails('obby')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
+            <div class="relative aspect-square bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+              <div class="relative text-center p-2">
+                <i class="fa-solid fa-person-running text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
+                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-amber-100 bg-black/30 px-2 py-0.5 rounded-full">10 Stage Obby</div>
+              </div>
+            </div>
+            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Mega Fun Obby Parkour</h4>
+            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
+              <span>94%</span>
+              <span class="mx-1">•</span>
+              <i class="fa-solid fa-user text-gray-400"></i>
+              <span>23.1K</span>
+            </p>
+          </div>
+
+          <!-- 4. Grow a Garden Simulator -->
+          <div onclick="openGameDetails('garden')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
+            <div class="relative aspect-square bg-gradient-to-br from-emerald-400 via-green-600 to-teal-700 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+              <div class="relative text-center p-2">
+                <i class="fa-solid fa-seedling text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
+                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-emerald-100 bg-black/30 px-2 py-0.5 rounded-full">Farm & Harvest</div>
+              </div>
+            </div>
+            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Grow a Garden Simulator</h4>
+            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
+              <span>99%</span>
+              <span class="mx-1">•</span>
+              <i class="fa-solid fa-user text-gray-400"></i>
+              <span>31.5K</span>
+            </p>
+          </div>
+
+          <!-- 5. Mining Simulator -->
+          <div onclick="openGameDetails('mining')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
+            <div class="relative aspect-square bg-gradient-to-br from-amber-700 via-stone-800 to-yellow-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+              <div class="relative text-center p-2">
+                <i class="fa-solid fa-pickaxe text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
+                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-yellow-100 bg-black/30 px-2 py-0.5 rounded-full">Dig & Find Ores</div>
+              </div>
+            </div>
+            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Mining Simulator 2D</h4>
+            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
+              <span>97%</span>
+              <span class="mx-1">•</span>
+              <i class="fa-solid fa-user text-gray-400"></i>
+              <span>18.9K</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="page-game-details" class="hidden flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
+    <button onclick="navTo('home')" class="flex items-center space-x-2 text-xs font-bold text-roblox-textMuted hover:text-black transition">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Back to Discover</span>
+    </button>
+
+    <div class="bg-white border border-roblox-darkBorder rounded-2xl p-6 roblox-shadow grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div id="details-banner" class="md:col-span-7 aspect-video bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 rounded-xl relative overflow-hidden flex items-center justify-center shadow-inner">
+        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
+        <div class="text-center text-white space-y-2 relative z-10">
+          <i id="details-icon" class="fa-solid fa-cubes text-6xl drop-shadow-lg"></i>
+          <h2 id="details-title" class="font-black text-xl tracking-wide">ROBLOX EXPERIENCE</h2>
+          <span id="details-badge" class="inline-block bg-white/20 text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md">Official Template Experience</span>
+        </div>
+      </div>
+
+      <div class="md:col-span-5 flex flex-col justify-between space-y-4">
+        <div>
+          <h1 id="details-name" class="text-2xl font-black text-roblox-textMain">[2048x16] Classic Baseplate</h1>
+          <p class="text-xs text-roblox-textMuted mt-1">By <span class="font-bold text-roblox-accent">Roblox Studios</span></p>
+          <p id="details-desc" class="text-xs text-gray-600 mt-3 leading-relaxed">
+            Experience authentic Roblox gameplay!
+          </p>
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-gray-100">
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span>Active Players</span>
+            <span id="details-players" class="font-bold text-gray-800">12,482</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span>Rating</span>
+            <span id="details-rating" class="font-bold text-emerald-600">👍 98%</span>
+          </div>
+
+          <!-- Big Roblox Green Play Button -->
+          <button onclick="launchGame()" class="w-full bg-roblox-playBtn hover:bg-roblox-playBtnHover text-white font-black text-lg py-3 rounded-xl shadow-lg hover:shadow-xl transform active:scale-95 transition flex items-center justify-center space-x-3">
+            <i class="fa-solid fa-play text-xl"></i>
+            <span>Play Experience</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-view" class="hidden fixed inset-0 z-50 bg-slate-900 flex flex-col">
+    <!-- In-Game Top Overlay Controls Bar -->
+    <div class="absolute top-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
+      <div class="flex items-center space-x-3 pointer-events-auto">
+        <button onclick="togglePauseMenu()" class="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white p-2.5 rounded-xl border border-white/20 shadow-lg transition">
+          <i class="fa-solid fa-bars text-sm"></i>
+        </button>
+        <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-bold flex items-center space-x-2">
+          <i class="fa-solid fa-user text-roblox-accent"></i>
+          <span id="ingame-player-name">Player1</span>
+        </div>
+        <button onclick="toggleChat()" class="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-white/20 text-xs font-bold flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-comment"></i>
+          <span>Chat</span>
+        </button>
+      </div>
+
+      <!-- Center Dynamic Game Info Banner -->
+      <div id="ingame-game-info" class="pointer-events-auto bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-white/20 text-white text-xs font-bold flex items-center space-x-3 shadow-lg">
+        <span id="game-info-badge" class="bg-roblox-accent px-2 py-0.5 rounded-md text-[10px]">Baseplate</span>
+        <span id="game-info-text">2048x16 Studs</span>
+      </div>
+
+      <!-- Health Bar / Coins Indicator -->
+      <div class="pointer-events-auto bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-3">
+        <div id="coins-display-hud" class="hidden text-amber-400 font-black text-xs flex items-center space-x-1">
+          <i class="fa-solid fa-coins"></i>
+          <span id="coins-count">0</span>
+        </div>
+        <div id="hp-container" class="flex items-center space-x-2">
+          <i class="fa-solid fa-heart text-red-500 text-xs"></i>
+          <div class="w-24 bg-gray-700 h-2.5 rounded-full overflow-hidden border border-white/10">
+            <div id="ingame-hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-200"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Box -->
+    <div id="chat-box" class="hidden absolute top-16 left-3 z-30 w-72 bg-black/75 backdrop-blur-md border border-white/20 rounded-xl p-3 text-xs text-white space-y-2 shadow-2xl">
+      <div id="chat-messages" class="h-32 overflow-y-auto space-y-1 font-sans pr-1">
+        <div class="text-amber-300 font-bold">[System] Welcome to Roblox Multiverse!</div>
+        <div class="text-gray-300 text-[11px]">Type /speed, /jump, or /reset anytime!</div>
+      </div>
+      <form onsubmit="sendChatMessage(event)" class="flex space-x-1">
+        <input id="chat-input" type="text" placeholder="Send a message..." class="flex-1 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+        <button type="submit" class="bg-roblox-accent px-2.5 py-1 rounded-lg text-xs font-bold text-white">Send</button>
+      </form>
+    </div>
+
+    <!-- Main Game Canvas -->
+    <canvas id="gameCanvas" class="w-full h-full flex-1 bg-sky-300"></canvas>
+
+    <!-- Bottom Tool Hotbar (Baseplate/Obby Mode) -->
+    <div id="hotbar-container" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md p-2 rounded-2xl border border-white/20 shadow-2xl">
+      <button id="tool-1" onclick="selectTool(1)" class="w-12 h-12 rounded-xl bg-white/20 border-2 border-roblox-accent flex flex-col items-center justify-center text-white transition hover:scale-105">
+        <i id="tool-1-icon" class="fa-solid fa-shield-halved text-sm"></i>
+        <span id="tool-1-label" class="text-[9px] font-bold mt-0.5">1: Sword</span>
+      </button>
+      <button id="tool-2" onclick="selectTool(2)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
+        <i id="tool-2-icon" class="fa-solid fa-bolt text-red-400 text-sm"></i>
+        <span id="tool-2-label" class="text-[9px] font-bold mt-0.5">2: Speed</span>
+      </button>
+      <button id="tool-3" onclick="selectTool(3)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
+        <i id="tool-3-icon" class="fa-solid fa-angles-up text-blue-400 text-sm"></i>
+        <span id="tool-3-label" class="text-[9px] font-bold mt-0.5">3: Gravity</span>
+      </button>
+      <button id="tool-4" onclick="selectTool(4)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
+        <i id="tool-4-icon" class="fa-solid fa-cubes text-amber-400 text-sm"></i>
+        <span id="tool-4-label" class="text-[9px] font-bold mt-0.5">4: BTools</span>
+      </button>
+    </div>
+
+    <!-- Mobile Touch Onscreen Controls -->
+    <div class="absolute bottom-4 left-4 z-20 flex space-x-2 sm:hidden">
+      <button id="touch-left" class="w-12 h-12 rounded-2xl bg-black/50 text-white font-bold text-xl border border-white/20 active:bg-white/40 flex items-center justify-center">◄</button>
+      <button id="touch-right" class="w-12 h-12 rounded-2xl bg-black/50 text-white font-bold text-xl border border-white/20 active:bg-white/40 flex items-center justify-center">►</button>
+    </div>
+    <div class="absolute bottom-4 right-4 z-20 sm:hidden">
+      <button id="touch-jump" class="w-14 h-14 rounded-full bg-roblox-accent text-white font-bold text-lg border-2 border-white shadow-xl active:scale-95 flex items-center justify-center">▲</button>
+    </div>
+  </div>
+
+  <div id="avatar-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 roblox-shadow border border-gray-200">
+      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+        <h2 class="text-lg font-bold flex items-center space-x-2 text-roblox-textMain">
+          <i class="fa-solid fa-shirt text-roblox-accent"></i>
+          <span>Avatar Shop & Customizer</span>
+        </h2>
+        <button onclick="closeAvatarModal()" class="text-gray-400 hover:text-black"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="flex space-x-2 border-b border-gray-200 pb-2 text-xs font-bold">
+        <button id="tab-btn-accessories" onclick="switchAvatarTab('accessories')" class="px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2">
+          <i class="fa-solid fa-hat-cowboy"></i>
+          <span>Free Accessories</span>
+        </button>
+        <button id="tab-btn-colors" onclick="switchAvatarTab('colors')" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2">
+          <i class="fa-solid fa-palette"></i>
+          <span>Body Colors</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+        <div class="sm:col-span-5 bg-gradient-to-b from-sky-200 to-sky-100 rounded-xl p-4 flex flex-col items-center justify-center h-64 border border-gray-200 shadow-inner relative overflow-hidden">
+          <canvas id="avatarPreviewCanvas" width="160" height="200"></canvas>
+          <span id="equipped-hat-badge" class="absolute bottom-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">Hat: Cowboy Hat</span>
+        </div>
+
+        <div class="sm:col-span-7 h-64 overflow-y-auto pr-1">
+          <div id="panel-accessories" class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-500 mb-1">
+              <span>Catalog Hats & Gears</span>
+              <span class="text-emerald-600 font-extrabold">100% FREE</span>
+            </div>
+            <div id="hats-grid" class="grid grid-cols-2 gap-2 text-xs"></div>
+          </div>
+
+          <div id="panel-colors" class="hidden space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">Head / Skin Color</label>
+              <div class="flex space-x-2">
+                <button onclick="setAvatarColor('head', '#FDF06F')" class="w-7 h-7 rounded-full bg-[#FDF06F] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('head', '#E0AA69')" class="w-7 h-7 rounded-full bg-[#E0AA69] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('head', '#A05F2C')" class="w-7 h-7 rounded-full bg-[#A05F2C] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('head', '#7C8A99')" class="w-7 h-7 rounded-full bg-[#7C8A99] border border-gray-300 hover:scale-110 transition"></button>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">Torso Shirt Color</label>
+              <div class="flex space-x-2">
+                <button onclick="setAvatarColor('torso', '#C1272D')" class="w-7 h-7 rounded-full bg-[#C1272D] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('torso', '#00A2FF')" class="w-7 h-7 rounded-full bg-[#00A2FF] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('torso', '#27AE60')" class="w-7 h-7 rounded-full bg-[#27AE60] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('torso', '#8E44AD')" class="w-7 h-7 rounded-full bg-[#8E44AD] border border-gray-300 hover:scale-110 transition"></button>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">Arm Color</label>
+              <div class="flex space-x-2">
+                <button onclick="setAvatarColor('arms', '#FDF06F')" class="w-7 h-7 rounded-full bg-[#FDF06F] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('arms', '#C1272D')" class="w-7 h-7 rounded-full bg-[#C1272D] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('arms', '#00A2FF')" class="w-7 h-7 rounded-full bg-[#00A2FF] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('arms', '#191B1D')" class="w-7 h-7 rounded-full bg-[#191B1D] border border-gray-300 hover:scale-110 transition"></button>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">Pants / Leg Color</label>
+              <div class="flex space-x-2">
+                <button onclick="setAvatarColor('legs', '#00263A')" class="w-7 h-7 rounded-full bg-[#00263A] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('legs', '#2C3E50')" class="w-7 h-7 rounded-full bg-[#2C3E50] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('legs', '#D35400')" class="w-7 h-7 rounded-full bg-[#D35400] border border-gray-300 hover:scale-110 transition"></button>
+                <button onclick="setAvatarColor('legs', '#16A085')" class="w-7 h-7 rounded-full bg-[#16A085] border border-gray-300 hover:scale-110 transition"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeAvatarModal()" class="w-full bg-roblox-playBtn hover:bg-roblox-playBtnHover text-white py-2.5 rounded-xl font-bold transition">Save & Apply</button>
+    </div>
+  </div>
+
+  <!-- In-Game Pause Menu -->
+  <div id="pause-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#191B1D] text-white rounded-2xl max-w-sm w-full p-6 space-y-4 border border-white/10 shadow-2xl text-center">
+      <h2 class="text-xl font-black tracking-wide">ROBLOX MENU</h2>
+      <div class="space-y-2 pt-2">
+        <button onclick="togglePauseMenu()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 rounded-xl border border-white/20 transition">Resume Experience</button>
+        <button onclick="resetCharacter()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition">Reset Character (OOF)</button>
+        <button onclick="leaveGame()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl transition">Leave Game</button>
+      </div>
     </div>
   </div>
 
   <script>
-    // --- DataStore System ---
-    const DataStore = {
-      KEY: 'ROBLOX_2D_MOBILE_DATASTORE_V1',
-      data: {
-        studs: 0,
-        avatar: {
-          head: '#f3c794',
-          torso: '#00a2ff',
-          legs: '#1e272e',
-          hat: 'none' // 'none', 'fedora', 'crown'
-        }
+    const HATS = [
+      { id: 'cowboy', name: 'Cowboy Hat', icon: 'fa-hat-cowboy', color: '#8B4513' },
+      { id: 'medical', name: 'Medical Cap', icon: 'fa-user-nurse', color: '#EF4444' },
+      { id: 'beanie', name: 'Winter Beanie', icon: 'fa-hat-wizard', color: '#DC2626' },
+      { id: 'headphones', name: 'Gaming Headset', icon: 'fa-headphones', color: '#06B6D4' },
+      { id: 'tophat', name: 'Gentleman Top Hat', icon: 'fa-graduation-cap', color: '#18181B' },
+      { id: 'crown', name: 'Golden Crown', icon: 'fa-crown', color: '#F59E0B' },
+      { id: 'viking', name: 'Viking Horns', icon: 'fa-shield-cat', color: '#94A3B8' },
+      { id: 'cap', name: 'Roblox Cap', icon: 'fa-baseball-bat-ball', color: '#2563EB' },
+      { id: 'catears', name: 'Neko Cat Ears', icon: 'fa-cat', color: '#F472B6' },
+      { id: 'valkyrie', name: 'Valkyrie Helm', icon: 'fa-feather-pointed', color: '#EAB308' }
+    ];
+
+    const GAME_DETAILS_DATA = {
+      baseplate: {
+        id: 'baseplate',
+        title: '[2048x16] Classic Baseplate',
+        badge: 'Classic Sandbox Experience',
+        icon: 'fa-cubes',
+        desc: 'Step onto the legendary 2048x16 stud baseplate! Build structures with BTools, slash with the classic sword, and run around using speed and gravity coils.',
+        players: '12,482',
+        rating: '👍 98% (48,201)',
+        bg: 'from-sky-400 via-blue-500 to-indigo-600'
       },
-      load() {
-        const saved = localStorage.getItem(this.KEY);
-        if (saved) {
-          try { this.data = JSON.parse(saved); } catch(e){}
-        }
-        this.updateHUD();
+      toh: {
+        id: 'toh',
+        title: 'Tower of Hell (TOH 2D)',
+        badge: 'Tower Parkour Challenge',
+        icon: 'fa-tower-observation',
+        desc: 'Race against time to reach the top of a randomly colored obstacle tower without checkpoints! Watch out for rising lava at the bottom!',
+        players: '48,910',
+        rating: '👍 96% (120,490)',
+        bg: 'from-purple-600 via-pink-600 to-red-500'
       },
-      save() {
-        localStorage.setItem(this.KEY, JSON.stringify(this.data));
-        this.updateHUD();
+      obby: {
+        id: 'obby',
+        title: 'Super Mega Easy Obby (10 Stages)',
+        badge: '10 Stage Obstacle Course',
+        icon: 'fa-person-running',
+        desc: 'Conquer 10 unique stages of lava pits, disappearing blocks, moving laser beams, and trampoline jump pads! Touch checkpoints to save your stage!',
+        players: '23,105',
+        rating: '👍 94% (35,900)',
+        bg: 'from-amber-400 via-orange-500 to-red-600'
       },
-      updateHUD() {
-        document.getElementById('studCount').innerText = this.data.studs;
+      garden: {
+        id: 'garden',
+        title: 'Grow a Garden Simulator',
+        badge: 'Farming & Harvest Tycoon',
+        icon: 'fa-seedling',
+        desc: 'Plant seeds, water your crops with watering cans, harvest ripe produce, sell to the Produce Shop, and earn Coins to unlock Golden Berries!',
+        players: '31,520',
+        rating: '👍 99% (82,100)',
+        bg: 'from-emerald-400 via-green-600 to-teal-700'
+      },
+      mining: {
+        id: 'mining',
+        title: 'Mining Simulator 2D',
+        badge: 'Underground Digging & Ores',
+        icon: 'fa-pickaxe',
+        desc: 'Dig deep beneath the surface to mine Dirt, Stone, Iron, Gold, Diamonds, and Obsidian! Upgrade your pickaxes and backpack storage at the Surface Station!',
+        players: '18,940',
+        rating: '👍 97% (54,220)',
+        bg: 'from-amber-700 via-stone-800 to-yellow-600'
       }
     };
 
-    // --- Game Canvas & Physics Engine ---
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // Game World State
-    const player = {
-      x: 100,
-      y: 100,
-      width: 32,
-      height: 54,
-      vx: 0,
-      vy: 0,
-      speed: 0.8,
-      maxSpeed: 6,
-      friction: 0.82,
-      gravity: 0.55,
-      jumpPower: -13,
-      grounded: false,
-      facingRight: true,
-      walkCycle: 0
+    const state = {
+      currentPage: 'home',
+      selectedGame: 'baseplate',
+      avatarTab: 'accessories',
+      coins: 250,
+      player: {
+        name: 'Player' + Math.floor(100 + Math.random() * 900),
+        headColor: '#FDF06F',
+        torsoColor: '#C1272D',
+        armColor: '#FDF06F',
+        legsColor: '#00263A',
+        equippedHat: 'cowboy',
+        hp: 100,
+        x: 200,
+        y: 600,
+        vx: 0,
+        vy: 0,
+        width: 32,
+        height: 64,
+        grounded: false,
+        speed: 5.5,
+        jumpPower: 12.5,
+        facing: 1,
+        activeTool: 1,
+        btoolsBlocks: [],
+        animTime: 0,
+        isSwinging: false,
+        swingTimer: 0,
+        isOofed: false,
+        oofParts: []
+      },
+      keys: {
+        left: false,
+        right: false,
+        up: false,
+        space: false,
+        down: false
+      },
+      // Game-specific State
+      obby: {
+        stage: 1,
+        checkpointX: 200,
+        checkpointY: 600
+      },
+      toh: {
+        timeLeft: 180,
+        lavaY: 2800,
+        lavaSpeed: 0.35,
+        topReached: false
+      },
+      garden: {
+        selectedSeed: 'carrot',
+        water: 100,
+        plots: [
+          { x: 300, y: 640, crop: 'carrot', stage: 0, progress: 0 },
+          { x: 400, y: 640, crop: 'tomato', stage: 0, progress: 0 },
+          { x: 500, y: 640, crop: null, stage: 0, progress: 0 },
+          { x: 600, y: 640, crop: null, stage: 0, progress: 0 },
+          { x: 700, y: 640, crop: null, stage: 0, progress: 0 },
+          { x: 800, y: 640, crop: null, stage: 0, progress: 0 }
+        ],
+        inventory: { carrot: 0, tomato: 0, corn: 0, goldberry: 0 }
+      },
+      mining: {
+        backpack: [],
+        maxBackpack: 15,
+        pickaxeTier: 1, // 1: Wood, 2: Iron, 3: Gold, 4: Diamond
+        blocks: []
+      },
+      gameLoopReq: null,
+      previewAnimReq: null
     };
 
-    const platforms = [
-      { x: 0, y: canvas.height - 60, width: 2500, height: 100, color: '#2ed573' }, // Base Floor
-      { x: 300, y: canvas.height - 180, width: 180, height: 24, color: '#3a3f4d' },
-      { x: 580, y: canvas.height - 280, width: 160, height: 24, color: '#3a3f4d' },
-      { x: 880, y: canvas.height - 380, width: 220, height: 24, color: '#3a3f4d' },
-      { x: 1200, y: canvas.height - 220, width: 200, height: 24, color: '#3a3f4d' }
-    ];
+    function setSafeText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
 
-    let studs = [
-      { x: 380, y: canvas.height - 220, collected: false },
-      { x: 650, y: canvas.height - 320, collected: false },
-      { x: 950, y: canvas.height - 420, collected: false },
-      { x: 1280, y: canvas.height - 260, collected: false }
-    ];
-
-    let cameraX = 0;
-    let inputX = 0;
-    let jumpRequested = false;
-
-    // --- R6 Roblox Avatar Renderer ---
-    function drawRobloxAvatar(p) {
+    function drawHatOnHead(ctx, hatId, hx, hy, hw, hh, facing = 1) {
+      if (!hatId || hatId === 'none') return;
       ctx.save();
-      ctx.translate(p.x + p.width/2 - cameraX, p.y + p.height/2);
-      if (!p.facingRight) ctx.scale(-1, 1);
 
-      const limbAngle = Math.sin(p.walkCycle) * 0.6;
-      const config = DataStore.data.avatar;
-
-      // Left Leg / Right Leg
-      ctx.fillStyle = config.legs;
-      ctx.fillRect(-12 + Math.sin(p.walkCycle)*6, 8, 10, 18);
-      ctx.fillRect(2 - Math.sin(p.walkCycle)*6, 8, 10, 18);
-
-      // Torso
-      ctx.fillStyle = config.torso;
-      ctx.fillRect(-12, -10, 24, 20);
-
-      // Arms
-      ctx.fillStyle = config.torso;
-      ctx.fillRect(-18, -10 + Math.cos(p.walkCycle)*4, 6, 18);
-      ctx.fillRect(12, -10 - Math.cos(p.walkCycle)*4, 6, 18);
-
-      // Head
-      ctx.fillStyle = config.head;
-      ctx.fillRect(-10, -28, 20, 16);
-
-      // Roblox Classic Face (Eyes + Smile)
-      ctx.fillStyle = '#000';
-      ctx.fillRect(2, -22, 3, 3);
-      ctx.fillRect(6, -22, 3, 3);
-      ctx.beginPath();
-      ctx.arc(4, -16, 4, 0, Math.PI);
-      ctx.stroke();
-
-      // Accessories
-      if (config.hat === 'fedora') {
-        ctx.fillStyle = '#1e272e';
-        ctx.fillRect(-14, -31, 28, 4);
-        ctx.fillRect(-8, -39, 16, 8);
-      } else if (config.hat === 'crown') {
-        ctx.fillStyle = '#ffd700';
+      if (hatId === 'cowboy') {
+        ctx.fillStyle = '#6B3A19';
+        ctx.strokeStyle = '#3D200E';
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(-10, -28);
-        ctx.lineTo(-10, -38);
-        ctx.lineTo(-5, -32);
-        ctx.lineTo(0, -40);
-        ctx.lineTo(5, -32);
-        ctx.lineTo(10, -38);
-        ctx.lineTo(10, -28);
+        ctx.ellipse(hx + hw / 2, hy + 2, hw * 0.85, 4, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillRect(hx + 2, hy - 10, hw - 4, 11);
+        ctx.strokeRect(hx + 2, hy - 10, hw - 4, 11);
+      } else if (hatId === 'medical') {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#CBD5E1';
+        ctx.lineWidth = 1;
+        ctx.fillRect(hx + 1, hy - 6, hw - 2, 9);
+        ctx.strokeRect(hx + 1, hy - 6, hw - 2, 9);
+        ctx.fillStyle = '#EF4444';
+        ctx.fillRect(hx + hw / 2 - 1, hy - 4, 2, 6);
+        ctx.fillRect(hx + hw / 2 - 3, hy - 2, 6, 2);
+      } else if (hatId === 'beanie') {
+        ctx.fillStyle = '#DC2626';
+        ctx.fillRect(hx - 1, hy - 8, hw + 2, 11);
+        ctx.fillStyle = '#991B1B';
+        ctx.fillRect(hx - 2, hy, hw + 4, 4);
+      } else if (hatId === 'headphones') {
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(hx + hw / 2, hy + 2, hw / 2 + 2, Math.PI, 0);
+        ctx.stroke();
+        ctx.fillStyle = '#06B6D4';
+        ctx.fillRect(hx - 4, hy + 4, 4, 10);
+        ctx.fillRect(hx + hw, hy + 4, 4, 10);
+      } else if (hatId === 'tophat') {
+        ctx.fillStyle = '#18181B';
+        ctx.fillRect(hx - 5, hy + 1, hw + 10, 3);
+        ctx.fillRect(hx + 1, hy - 16, hw - 2, 17);
+      } else if (hatId === 'crown') {
+        ctx.fillStyle = '#F59E0B';
+        ctx.strokeStyle = '#B45309';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hx - 1, hy + 2);
+        ctx.lineTo(hx - 1, hy - 8);
+        ctx.lineTo(hx + hw * 0.25, hy - 3);
+        ctx.lineTo(hx + hw * 0.5, hy - 11);
+        ctx.lineTo(hx + hw * 0.75, hy - 3);
+        ctx.lineTo(hx + hw + 1, hy - 8);
+        ctx.lineTo(hx + hw + 1, hy + 2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else if (hatId === 'viking') {
+        ctx.fillStyle = '#64748B';
+        ctx.beginPath();
+        ctx.arc(hx + hw / 2, hy + 4, hw / 2 + 1, Math.PI, 0);
         ctx.fill();
+        ctx.fillStyle = '#FEF08A';
+        ctx.fillRect(hx - 6, hy - 10, 5, 10);
+        ctx.fillRect(hx + hw + 1, hy - 10, 5, 10);
+      } else if (hatId === 'cap') {
+        ctx.fillStyle = '#2563EB';
+        ctx.fillRect(hx - 1, hy - 6, hw + 2, 8);
+        const visorX = facing === 1 ? hx + hw - 2 : hx - 8;
+        ctx.fillRect(visorX, hy, 10, 3);
+      } else if (hatId === 'catears') {
+        ctx.fillStyle = '#F472B6';
+        ctx.fillRect(hx, hy - 8, 6, 8);
+        ctx.fillRect(hx + hw - 6, hy - 8, 6, 8);
+      } else if (hatId === 'valkyrie') {
+        ctx.fillStyle = '#EAB308';
+        ctx.fillRect(hx - 1, hy - 4, hw + 2, 7);
+        ctx.fillStyle = '#F8FAFC';
+        ctx.fillRect(hx - 8, hy - 12, 6, 12);
+        ctx.fillRect(hx + hw + 2, hy - 12, 6, 12);
       }
 
       ctx.restore();
     }
 
-    // --- Input & Mobile Controls ---
-    const joystickZone = document.getElementById('joystickZone');
-    const joystickKnob = document.getElementById('joystickKnob');
-    const jumpBtn = document.getElementById('jumpBtn');
+    const STUD_SIZE = 20;
+    const WORLD_WIDTH = 40960; // 2048 studs wide
+    const FLOOR_Y = 700;
 
-    let joystickActive = false;
-    let joystickOrigin = { x: 0, y: 0 };
+    window.addEventListener('load', () => {
+      setSafeText('player-display-name', state.player.name);
+      setSafeText('ingame-player-name', state.player.name);
 
-    joystickZone.addEventListener('touchstart', (e) => {
-      joystickActive = true;
-      const touch = e.touches[0];
-      const rect = joystickZone.getBoundingClientRect();
-      joystickOrigin = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-      handleJoystickMove(touch);
+      const bar = document.getElementById('boot-progress-bar');
+      if (bar) bar.style.width = '40%';
+
+      setTimeout(() => {
+        if (bar) bar.style.width = '80%';
+        setSafeText('boot-status-text', 'Loading Roblox Multiverse experiences...');
+      }, 300);
+
+      setTimeout(() => {
+        if (bar) bar.style.width = '100%';
+        const bootScreen = document.getElementById('boot-screen');
+        if (bootScreen) {
+          bootScreen.classList.add('opacity-0');
+          setTimeout(() => {
+            bootScreen.classList.add('hidden');
+            document.getElementById('roblox-header')?.classList.remove('hidden');
+            document.getElementById('page-home')?.classList.remove('hidden');
+          }, 400);
+        }
+      }, 700);
     });
 
-    window.addEventListener('touchmove', (e) => {
-      if (!joystickActive) return;
-      handleJoystickMove(e.touches[0]);
-    });
+    function navTo(page) {
+      sfx.playClick();
+      state.currentPage = page;
+      document.getElementById('page-home')?.classList.add('hidden');
+      document.getElementById('page-game-details')?.classList.add('hidden');
+      document.getElementById('game-view')?.classList.add('hidden');
 
-    window.addEventListener('touchend', () => {
-      if (!joystickActive) return;
-      joystickActive = false;
-      inputX = 0;
-      joystickKnob.style.transform = `translate(0px, 0px)`;
-    });
-
-    function handleJoystickMove(touch) {
-      const dx = touch.clientX - joystickOrigin.x;
-      const dy = touch.clientY - joystickOrigin.y;
-      const dist = Math.min(Math.hypot(dx, dy), 45);
-      const angle = Math.atan2(dy, dx);
-      
-      const knobX = Math.cos(angle) * dist;
-      const knobY = Math.sin(angle) * dist;
-      
-      joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
-      inputX = knobX / 45; // Normalized -1 to 1
+      if (page === 'home') {
+        document.getElementById('page-home')?.classList.remove('hidden');
+      }
     }
 
-    jumpBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      jumpRequested = true;
-    });
+    function openGameDetails(gameId = 'baseplate') {
+      sfx.playClick();
+      state.selectedGame = gameId;
+      const data = GAME_DETAILS_DATA[gameId];
 
-    // Keyboard Fallback (Desktop Testing)
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'd') inputX = 1;
-      if (e.key === 'ArrowLeft' || e.key === 'a') inputX = -1;
-      if (e.key === ' ' || e.key === 'w' || e.key === 'ArrowUp') jumpRequested = true;
-    });
-    window.addEventListener('keyup', (e) => {
-      if (['ArrowRight', 'd', 'ArrowLeft', 'a'].includes(e.key)) inputX = 0;
-    });
+      setSafeText('details-name', data.title);
+      setSafeText('details-title', data.title.toUpperCase());
+      setSafeText('details-badge', data.badge);
+      setSafeText('details-desc', data.desc);
+      setSafeText('details-players', data.players);
+      setSafeText('details-rating', data.rating);
 
-    // --- Main Game Loop ---
-    function update() {
-      // Movement Logic
-      player.vx += inputX * player.speed;
-      player.vx *= player.friction;
+      const iconEl = document.getElementById('details-icon');
+      if (iconEl) iconEl.className = 'fa-solid ' + data.icon + ' text-6xl drop-shadow-lg';
 
-      if (Math.abs(inputX) > 0.1) {
-        player.facingRight = inputX > 0;
-        player.walkCycle += 0.2;
+      const bannerEl = document.getElementById('details-banner');
+      if (bannerEl) bannerEl.className = `md:col-span-7 aspect-video bg-gradient-to-br ${data.bg} rounded-xl relative overflow-hidden flex items-center justify-center shadow-inner`;
+
+      document.getElementById('page-home')?.classList.add('hidden');
+      document.getElementById('page-game-details')?.classList.remove('hidden');
+    }
+
+    function openAvatarModal(defaultTab = 'accessories') {
+      sfx.playClick();
+      document.getElementById('avatar-modal')?.classList.remove('hidden');
+      switchAvatarTab(defaultTab);
+      renderHatsShop();
+      startAvatarPreview();
+    }
+
+    function closeAvatarModal() {
+      sfx.playClick();
+      document.getElementById('avatar-modal')?.classList.add('hidden');
+      if (state.previewAnimReq) cancelAnimationFrame(state.previewAnimReq);
+    }
+
+    function switchAvatarTab(tab) {
+      sfx.playClick();
+      state.avatarTab = tab;
+      const btnAcc = document.getElementById('tab-btn-accessories');
+      const btnCol = document.getElementById('tab-btn-colors');
+      const panelAcc = document.getElementById('panel-accessories');
+      const panelCol = document.getElementById('panel-colors');
+
+      if (tab === 'accessories') {
+        if (btnAcc) btnAcc.className = 'px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2';
+        if (btnCol) btnCol.className = 'px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2';
+        if (panelAcc) panelAcc.classList.remove('hidden');
+        if (panelCol) panelCol.classList.add('hidden');
       } else {
-        player.walkCycle = 0;
+        if (btnCol) btnCol.className = 'px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2';
+        if (btnAcc) btnAcc.className = 'px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2';
+        if (panelCol) panelCol.classList.remove('hidden');
+        if (panelAcc) panelAcc.classList.add('hidden');
       }
-
-      if (jumpRequested && player.grounded) {
-        player.vy = player.jumpPower;
-        player.grounded = false;
-      }
-      jumpRequested = false;
-
-      player.vy += player.gravity;
-      player.x += player.vx;
-      player.y += player.vy;
-
-      // Platform Collisions
-      player.grounded = false;
-      platforms.forEach(plat => {
-        if (
-          player.x < plat.x + plat.width &&
-          player.x + player.width > plat.x &&
-          player.y + player.height > plat.y &&
-          player.y + player.height - player.vy <= plat.y + 12
-        ) {
-          player.y = plat.y - player.height;
-          player.vy = 0;
-          player.grounded = true;
-        }
-      });
-
-      // Stud Collectibles Collision
-      studs.forEach(stud => {
-        if (!stud.collected && Math.hypot((player.x + 16) - stud.x, (player.y + 27) - stud.y) < 30) {
-          stud.collected = true;
-          DataStore.data.studs += 10;
-          DataStore.save();
-        }
-      });
-
-      // Camera Tracking
-      cameraX += (player.x - canvas.width / 3 - cameraX) * 0.08;
     }
 
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function renderHatsShop() {
+      const grid = document.getElementById('hats-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
 
-      // Sky Background
-      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#1a1c23');
-      grad.addColorStop(1, '#0d0e12');
-      ctx.fillStyle = grad;
+      const isNoneEquipped = state.player.equippedHat === 'none';
+      const noneCard = document.createElement('div');
+      noneCard.className = `border rounded-xl p-2.5 flex items-center justify-between transition ${isNoneEquipped ? 'border-roblox-accent bg-blue-50' : 'border-gray-200 bg-white'}`;
+      noneCard.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500 font-bold"><i class="fa-solid fa-ban"></i></div>
+          <div><div class="font-bold text-roblox-textMain">No Hat</div><div class="text-[10px] text-gray-400">Default</div></div>
+        </div>
+        <button onclick="equipHat('none')" class="px-2 py-1 rounded-md text-[10px] font-bold ${isNoneEquipped ? 'bg-emerald-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">${isNoneEquipped ? 'Equipped' : 'Equip'}</button>
+      `;
+      grid.appendChild(noneCard);
+
+      HATS.forEach(hat => {
+        const isEquipped = state.player.equippedHat === hat.id;
+        const card = document.createElement('div');
+        card.className = `border rounded-xl p-2.5 flex items-center justify-between transition ${isEquipped ? 'border-roblox-accent bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`;
+        card.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg text-white flex items-center justify-center text-sm shadow-sm" style="background-color: ${hat.color}">
+              <i class="fa-solid ${hat.icon}"></i>
+            </div>
+            <div>
+              <div class="font-bold text-roblox-textMain truncate w-20">${hat.name}</div>
+              <div class="text-[10px] text-emerald-600 font-bold">FREE</div>
+            </div>
+          </div>
+          <button onclick="equipHat('${hat.id}')" class="px-2 py-1 rounded-md text-[10px] font-bold transition ${isEquipped ? 'bg-emerald-600 text-white' : 'bg-roblox-accent text-white'}">${isEquipped ? 'Equipped' : 'Get Free'}</button>
+        `;
+        grid.appendChild(card);
+      });
+
+      const currentHat = HATS.find(h => h.id === state.player.equippedHat);
+      setSafeText('equipped-hat-badge', 'Hat: ' + (currentHat ? currentHat.name : 'None'));
+    }
+
+    function equipHat(hatId) {
+      sfx.playClick();
+      state.player.equippedHat = hatId;
+      renderHatsShop();
+      addSystemChat("Equipped " + (hatId === 'none' ? 'No Hat' : hatId) + "!");
+    }
+
+    function setAvatarColor(part, color) {
+      sfx.playClick();
+      if (part === 'head') state.player.headColor = color;
+      if (part === 'torso') state.player.torsoColor = color;
+      if (part === 'arms') state.player.armColor = color;
+      if (part === 'legs') state.player.legsColor = color;
+    }
+
+    function startAvatarPreview() {
+      const c = document.getElementById('avatarPreviewCanvas');
+      if (!c) return;
+      const pctx = c.getContext('2d');
+      let t = 0;
+
+      function renderPreview() {
+        t += 0.05;
+        pctx.clearRect(0, 0, c.width, c.height);
+
+        const cx = c.width / 2;
+        const cy = 140;
+        const bob = Math.sin(t * 3) * 2;
+
+        pctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        pctx.beginPath();
+        pctx.ellipse(cx, cy + 40, 24, 6, 0, 0, Math.PI * 2);
+        pctx.fill();
+
+        pctx.fillStyle = state.player.legsColor;
+        pctx.strokeStyle = '#000';
+        pctx.lineWidth = 1.5;
+        pctx.fillRect(cx - 13, cy + bob, 11, 38); ctx.strokeRect(cx - 13, cy + bob, 11, 38);
+        pctx.fillRect(cx + 2, cy + bob, 11, 38); ctx.strokeRect(cx + 2, cy + bob, 11, 38);
+
+        pctx.fillStyle = state.player.torsoColor;
+        pctx.fillRect(cx - 14, cy - 36 + bob, 28, 36); ctx.strokeRect(cx - 14, cy - 36 + bob, 28, 36);
+
+        pctx.fillStyle = state.player.armColor;
+        pctx.fillRect(cx - 24, cy - 34 + bob, 10, 34); ctx.strokeRect(cx - 24, cy - 34 + bob, 10, 34);
+        pctx.fillRect(cx + 14, cy - 34 + bob, 10, 34); ctx.strokeRect(cx + 14, cy - 34 + bob, 10, 34);
+
+        const hx = cx - 11; const hy = cy - 62 + bob; const hw = 22; const hh = 24;
+        pctx.fillStyle = state.player.headColor;
+        pctx.fillRect(hx, hy, hw, hh); ctx.strokeRect(hx, hy, hw, hh);
+
+        pctx.fillStyle = '#000';
+        pctx.fillRect(cx - 6, cy - 54 + bob, 3, 4);
+        pctx.fillRect(cx + 3, cy - 54 + bob, 3, 4);
+        pctx.fillRect(cx - 4, cy - 45 + bob, 8, 3);
+
+        drawHatOnHead(pctx, state.player.equippedHat, hx, hy, hw, hh, 1);
+        state.previewAnimReq = requestAnimationFrame(renderPreview);
+      }
+
+      renderPreview();
+    }
+
+    function togglePauseMenu() {
+      sfx.playClick();
+      document.getElementById('pause-modal')?.classList.toggle('hidden');
+    }
+
+    function toggleChat() {
+      sfx.playClick();
+      document.getElementById('chat-box')?.classList.toggle('hidden');
+    }
+
+    function updateCoinsDisplay() {
+      setSafeText('coins-count', state.coins.toString());
+    }
+
+    function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) return;
+
+      const container = document.getElementById('chat-messages');
+      if (container) {
+        const msg = document.createElement('div');
+        msg.innerHTML = `<span class="font-bold text-white">${state.player.name}:</span> ${val}`;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      if (val.toLowerCase() === '/speed') {
+        state.player.speed = 12;
+        addSystemChat("Speed Coil Boost active!");
+      } else if (val.toLowerCase() === '/jump') {
+        state.player.jumpPower = 18;
+        addSystemChat("Gravity Coil Boost active!");
+      } else if (val.toLowerCase() === '/coins') {
+        state.coins += 500;
+        updateCoinsDisplay();
+        addSystemChat("Gave +500 Coins!");
+      } else if (val.toLowerCase() === '/reset') {
+        resetCharacter();
+      }
+
+      input.value = '';
+    }
+
+    function addSystemChat(txt) {
+      const container = document.getElementById('chat-messages');
+      if (container) {
+        const msg = document.createElement('div');
+        msg.className = "text-amber-400 font-bold";
+        msg.innerText = "[System] " + txt;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function launchGame() {
+      sfx.playClick();
+      document.getElementById('page-game-details')?.classList.add('hidden');
+      document.getElementById('roblox-header')?.classList.add('hidden');
+      document.getElementById('game-view')?.classList.remove('hidden');
+
+      initCanvas();
+      setupGameExperience(state.selectedGame);
+
+      if (!state.gameLoopReq) {
+        state.gameLoopReq = requestAnimationFrame(gameLoop);
+      }
+    }
+
+    function setupGameExperience(gameId) {
+      const badge = document.getElementById('game-info-badge');
+      const text = document.getElementById('game-info-text');
+      const hotbar = document.getElementById('hotbar-container');
+      const coinsDisplay = document.getElementById('coins-display-hud');
+
+      const p = state.player;
+      p.hp = 100;
+      p.isOofed = false;
+      p.vx = 0; p.vy = 0;
+      updateHPBar();
+      updateCoinsDisplay();
+
+      if (gameId === 'baseplate') {
+        if (badge) badge.innerText = "Baseplate";
+        if (text) text.innerText = "2048x16 Studs";
+        if (hotbar) hotbar.classList.remove('hidden');
+        if (coinsDisplay) coinsDisplay.classList.add('hidden');
+        p.x = 200; p.y = FLOOR_Y - p.height;
+        setupBaseplateTools();
+      } else if (gameId === 'toh') {
+        if (badge) badge.innerText = "TOH 2D";
+        if (text) text.innerText = "Time Left: 180s";
+        if (hotbar) hotbar.classList.remove('hidden');
+        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
+        p.x = 200; p.y = 2600;
+        state.toh.timeLeft = 180;
+        state.toh.lavaY = 2800;
+        state.toh.topReached = false;
+        setupTOHTools();
+        addSystemChat("TOH Launched! Reach the top before time runs out!");
+      } else if (gameId === 'obby') {
+        if (badge) badge.innerText = "Obby Parkour";
+        if (text) text.innerText = `Stage ${state.obby.stage} / 10`;
+        if (hotbar) hotbar.classList.remove('hidden');
+        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
+        p.x = 200; p.y = FLOOR_Y - p.height;
+        state.obby.checkpointX = 200;
+        state.obby.checkpointY = FLOOR_Y - p.height;
+        setupObbyTools();
+        addSystemChat("Mega Obby Launched! Watch out for red lava!");
+      } else if (gameId === 'garden') {
+        if (badge) badge.innerText = "Grow a Garden";
+        if (text) text.innerText = "Plant & Water Crops";
+        if (hotbar) hotbar.classList.remove('hidden');
+        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
+        p.x = 200; p.y = FLOOR_Y - p.height;
+        setupGardenTools();
+        addSystemChat("Garden Tycoon! Plant seeds and sell harvested crops!");
+      } else if (gameId === 'mining') {
+        if (badge) badge.innerText = "Mining Simulator";
+        if (text) text.innerText = `Pickaxe: Tier ${state.mining.pickaxeTier}`;
+        if (hotbar) hotbar.classList.remove('hidden');
+        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
+        p.x = 200; p.y = FLOOR_Y - p.height;
+        initMiningGrid();
+        setupMiningTools();
+        addSystemChat("Mining Sim! Mine blocks underground and sell ores at the surface!");
+      }
+    }
+
+    function setupBaseplateTools() {
+      setSafeText('tool-1-label', '1: Sword');
+      setSafeText('tool-2-label', '2: Speed');
+      setSafeText('tool-3-label', '3: Gravity');
+      setSafeText('tool-4-label', '4: BTools');
+      selectTool(1);
+    }
+
+    function setupTOHTools() {
+      setSafeText('tool-1-label', '1: Sword');
+      setSafeText('tool-2-label', '2: Speed');
+      setSafeText('tool-3-label', '3: Gravity');
+      setSafeText('tool-4-label', '4: Shield');
+      selectTool(2);
+    }
+
+    function setupObbyTools() {
+      setSafeText('tool-1-label', '1: Normal');
+      setSafeText('tool-2-label', '2: Speed');
+      setSafeText('tool-3-label', '3: Gravity');
+      setSafeText('tool-4-label', '4: Restart');
+      selectTool(1);
+    }
+
+    function setupGardenTools() {
+      setSafeText('tool-1-label', '1: Water');
+      setSafeText('tool-2-label', '2: Carrot');
+      setSafeText('tool-3-label', '3: Tomato');
+      setSafeText('tool-4-label', '4: Harvest');
+      selectTool(1);
+    }
+
+    function setupMiningTools() {
+      setSafeText('tool-1-label', '1: Pickaxe');
+      setSafeText('tool-2-label', '2: Sell All');
+      setSafeText('tool-3-label', '3: Upgrade');
+      setSafeText('tool-4-label', '4: Surface');
+      selectTool(1);
+    }
+
+    function leaveGame() {
+      sfx.playClick();
+      document.getElementById('pause-modal')?.classList.add('hidden');
+      document.getElementById('game-view')?.classList.add('hidden');
+      document.getElementById('roblox-header')?.classList.remove('hidden');
+      navTo('home');
+    }
+
+    function resetCharacter() {
+      sfx.playOof();
+      const pModal = document.getElementById('pause-modal');
+      if (pModal && !pModal.classList.contains('hidden')) {
+        togglePauseMenu();
+      }
+      
+      const p = state.player;
+      p.hp = 0;
+      p.isOofed = true;
+      updateHPBar();
+
+      p.oofParts = [
+        { x: p.x + 8, y: p.y, vx: -3 + Math.random() * 6, vy: -6, color: p.headColor, w: 16, h: 16 },
+        { x: p.x, y: p.y + 16, vx: -4 + Math.random() * 8, vy: -5, color: p.torsoColor, w: 24, h: 24 },
+        { x: p.x - 6, y: p.y + 16, vx: -5 + Math.random() * 4, vy: -7, color: p.armColor, w: 10, h: 22 },
+        { x: p.x + 24, y: p.y + 16, vx: 1 + Math.random() * 4, vy: -7, color: p.armColor, w: 10, h: 22 },
+        { x: p.x + 2, y: p.y + 40, vx: -4 + Math.random() * 4, vy: -4, color: p.legsColor, w: 10, h: 24 },
+        { x: p.x + 14, y: p.y + 40, vx: 1 + Math.random() * 4, vy: -4, color: p.legsColor, w: 10, h: 24 }
+      ];
+
+      addSystemChat(p.name + " died. OOF!");
+
+      setTimeout(() => {
+        if (state.selectedGame === 'obby') {
+          p.x = state.obby.checkpointX;
+          p.y = state.obby.checkpointY;
+        } else if (state.selectedGame === 'toh') {
+          p.x = 200;
+          p.y = 2600;
+        } else {
+          p.x = 200;
+          p.y = FLOOR_Y - p.height;
+        }
+        p.vx = 0; p.vy = 0;
+        p.hp = 100;
+        p.isOofed = false;
+        updateHPBar();
+      }, 1200);
+    }
+
+    function updateHPBar() {
+      const bar = document.getElementById('ingame-hp-bar');
+      if (bar) bar.style.width = Math.max(0, state.player.hp) + '%';
+    }
+
+    function selectTool(slot) {
+      sfx.playClick();
+      state.player.activeTool = slot;
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById('tool-' + i);
+        if (btn) {
+          if (i === slot) {
+            btn.classList.add('border-roblox-accent', 'bg-white/20');
+            btn.classList.remove('border-white/20', 'bg-black/40');
+          } else {
+            btn.classList.remove('border-roblox-accent', 'bg-white/20');
+            btn.classList.add('border-white/20', 'bg-black/40');
+          }
+        }
+      }
+
+      if (state.selectedGame === 'baseplate' || state.selectedGame === 'toh' || state.selectedGame === 'obby') {
+        if (slot === 2) {
+          sfx.playCoil();
+          state.player.speed = 10;
+          state.player.jumpPower = 12.5;
+        } else if (slot === 3) {
+          sfx.playCoil();
+          state.player.speed = 5.5;
+          state.player.jumpPower = 17.5;
+        } else {
+          state.player.speed = 5.5;
+          state.player.jumpPower = 12.5;
+        }
+      }
+
+      // Special button triggers
+      if (state.selectedGame === 'obby' && slot === 4) {
+        state.player.x = state.obby.checkpointX;
+        state.player.y = state.obby.checkpointY;
+        addSystemChat("Teleported to Checkpoint!");
+      } else if (state.selectedGame === 'mining' && slot === 2) {
+        sellMiningOres();
+      } else if (state.selectedGame === 'mining' && slot === 3) {
+        upgradePickaxe();
+      } else if (state.selectedGame === 'mining' && slot === 4) {
+        state.player.x = 200;
+        state.player.y = FLOOR_Y - state.player.height;
+        addSystemChat("Teleported to Surface!");
+      }
+    }
+
+    let canvas, ctx;
+
+    function initCanvas() {
+      canvas = document.getElementById('gameCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') state.keys.left = true;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') state.keys.right = true;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') state.keys.down = true;
+        if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+          if (!state.keys.space) {
+            state.keys.space = true;
+            tryJump();
+          }
+        }
+        if (e.code === 'Escape') togglePauseMenu();
+        if (e.code === 'KeySlash') {
+          e.preventDefault();
+          toggleChat();
+          document.getElementById('chat-input')?.focus();
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') state.keys.left = false;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') state.keys.right = false;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') state.keys.down = false;
+        if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') state.keys.space = false;
+      });
+
+      canvas.addEventListener('mousedown', (e) => handleCanvasClick(e));
+
+      setupTouchControl('touch-left', (pressed) => state.keys.left = pressed);
+      setupTouchControl('touch-right', (pressed) => state.keys.right = pressed);
+      document.getElementById('touch-jump')?.addEventListener('touchstart', (e) => { e.preventDefault(); tryJump(); });
+    }
+
+    function setupTouchControl(id, cb) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('touchstart', (e) => { e.preventDefault(); cb(true); });
+      el.addEventListener('touchend', (e) => { e.preventDefault(); cb(false); });
+    }
+
+    function resizeCanvas() {
+      if (!canvas || !canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+
+    function tryJump() {
+      if (state.player.grounded && !state.player.isOofed) {
+        state.player.vy = -state.player.jumpPower;
+        state.player.grounded = false;
+        sfx.playJump();
+      }
+    }
+
+    function initMiningGrid() {
+      state.mining.blocks = [];
+      const startY = FLOOR_Y;
+      const blockW = 40; const blockH = 40;
+      for (let r = 0; r < 25; r++) {
+        for (let c = 0; c < 30; c++) {
+          const bx = 100 + c * blockW;
+          const by = startY + r * blockH;
+          let type = 'dirt';
+          let color = '#8B5A2B';
+          let hp = 1;
+          let value = 10;
+
+          if (r > 3) { type = 'stone'; color = '#7F8C8D'; hp = 2; value = 25; }
+          if (r > 8 && Math.random() < 0.3) { type = 'iron'; color = '#BDC3C7'; hp = 3; value = 60; }
+          if (r > 14 && Math.random() < 0.25) { type = 'gold'; color = '#F1C40F'; hp = 4; value = 150; }
+          if (r > 19 && Math.random() < 0.2) { type = 'diamond'; color = '#3498DB'; hp = 5; value = 400; }
+
+          state.mining.blocks.push({ x: bx, y: by, w: blockW, h: blockH, type, color, hp, maxHp: hp, value });
+        }
+      }
+    }
+
+    function handleCanvasClick(e) {
+      if (state.player.isOofed) return;
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left + (state.player.x - canvas.width / 2);
+      const clickY = e.clientY - rect.top + (state.player.y - canvas.height / 2);
+
+      if (state.selectedGame === 'baseplate') {
+        if (state.player.activeTool === 1) {
+          state.player.isSwinging = true;
+          state.player.swingTimer = 10;
+          sfx.playSword();
+        } else if (state.player.activeTool === 4) {
+          state.player.btoolsBlocks.push({
+            x: Math.floor(clickX / STUD_SIZE) * STUD_SIZE,
+            y: Math.floor(clickY / STUD_SIZE) * STUD_SIZE,
+            w: STUD_SIZE * 2, h: STUD_SIZE * 2, color: '#E74C3C'
+          });
+          sfx.playMine();
+        }
+      } else if (state.selectedGame === 'garden') {
+        state.garden.plots.forEach(p => {
+          if (clickX >= p.x - 20 && clickX <= p.x + 60 && clickY >= p.y - 10 && clickY <= p.y + 40) {
+            if (state.player.activeTool === 1) { // Water
+              if (p.crop && p.progress < 100) {
+                p.progress = Math.min(100, p.progress + 35);
+                sfx.playWater();
+                if (p.progress >= 100) p.stage = 2;
+              }
+            } else if (state.player.activeTool === 2) { // Plant Carrot
+              if (!p.crop) { p.crop = 'carrot'; p.stage = 0; p.progress = 0; sfx.playClick(); }
+            } else if (state.player.activeTool === 3) { // Plant Tomato
+              if (!p.crop) { p.crop = 'tomato'; p.stage = 0; p.progress = 0; sfx.playClick(); }
+            } else if (state.player.activeTool === 4) { // Harvest
+              if (p.crop && p.progress >= 100) {
+                const yieldVal = p.crop === 'carrot' ? 30 : 60;
+                state.coins += yieldVal;
+                updateCoinsDisplay();
+                sfx.playCoin();
+                addSystemChat(`Harvested ${p.crop}! +${yieldVal} Coins`);
+                p.crop = null; p.stage = 0; p.progress = 0;
+              }
+            }
+          }
+        });
+      } else if (state.selectedGame === 'mining') {
+        if (state.player.activeTool === 1) {
+          state.mining.blocks.forEach((b, idx) => {
+            if (clickX >= b.x && clickX <= b.x + b.w && clickY >= b.y && clickY <= b.y + b.h) {
+              const dist = Math.hypot(state.player.x - b.x, state.player.y - b.y);
+              if (dist < 120) {
+                b.hp -= state.mining.pickaxeTier;
+                sfx.playMine();
+                if (b.hp <= 0) {
+                  if (state.mining.backpack.length < state.mining.maxBackpack) {
+                    state.mining.backpack.push({ type: b.type, value: b.value });
+                    addSystemChat(`Mined ${b.type}! (${state.mining.backpack.length}/${state.mining.maxBackpack})`);
+                  } else {
+                    addSystemChat("Backpack Full! Go to surface to sell ores!");
+                  }
+                  state.mining.blocks.splice(idx, 1);
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+
+    function sellMiningOres() {
+      if (state.mining.backpack.length === 0) {
+        addSystemChat("No ores in backpack to sell!");
+        return;
+      }
+      let total = 0;
+      state.mining.backpack.forEach(item => total += item.value);
+      state.coins += total;
+      state.mining.backpack = [];
+      updateCoinsDisplay();
+      sfx.playCoin();
+      addSystemChat(`Sold all ores for +${total} Coins!`);
+    }
+
+    function upgradePickaxe() {
+      const cost = state.mining.pickaxeTier * 200;
+      if (state.coins >= cost) {
+        state.coins -= cost;
+        state.mining.pickaxeTier++;
+        updateCoinsDisplay();
+        sfx.playWin();
+        addSystemChat(`Upgraded Pickaxe to Tier ${state.mining.pickaxeTier}!`);
+      } else {
+        addSystemChat(`Need ${cost} Coins to upgrade Pickaxe!`);
+      }
+    }
+
+    function updatePhysics() {
+      const p = state.player;
+
+      if (p.isOofed) {
+        for (const bp of p.oofParts) {
+          bp.x += bp.vx; bp.y += bp.vy; bp.vy += 0.4;
+          if (bp.y + bp.h >= FLOOR_Y) {
+            bp.y = FLOOR_Y - bp.h; bp.vy = -bp.vy * 0.3; bp.vx *= 0.8;
+          }
+        }
+        return;
+      }
+
+      if (state.keys.left) { p.vx = -p.speed; p.facing = -1; }
+      else if (state.keys.right) { p.vx = p.speed; p.facing = 1; }
+      else { p.vx *= 0.78; }
+
+      p.x += p.vx;
+      p.vy += 0.55;
+      p.y += p.vy;
+
+      // Ground Floor Collision
+      if (p.y + p.height >= FLOOR_Y && state.selectedGame !== 'toh') {
+        p.y = FLOOR_Y - p.height;
+        p.vy = 0;
+        p.grounded = true;
+      } else {
+        p.grounded = false;
+      }
+
+      // Baseplate Custom Blocks Collision
+      for (const b of p.btoolsBlocks) {
+        if (p.x < b.x + b.w && p.x + p.width > b.x &&
+            p.y + p.height >= b.y && p.y + p.height <= b.y + 14 && p.vy >= 0) {
+          p.y = b.y - p.height;
+          p.vy = 0;
+          p.grounded = true;
+        }
+      }
+
+      // TOH Floor Platforms & Rising Lava
+      if (state.selectedGame === 'toh') {
+        const tohPlatforms = [
+          { x: 100, y: 2650, w: 250, h: 20 },
+          { x: 300, y: 2500, w: 120, h: 20, color: '#3498DB' },
+          { x: 150, y: 2350, w: 100, h: 20, color: '#E74C3C' },
+          { x: 350, y: 2200, w: 110, h: 20, color: '#2ECC71' },
+          { x: 200, y: 2050, w: 90, h: 20, color: '#F1C40F' },
+          { x: 100, y: 1900, w: 120, h: 20, color: '#9B59B6' },
+          { x: 300, y: 1750, w: 100, h: 20, color: '#1ABC9C' },
+          { x: 180, y: 1600, w: 140, h: 20, color: '#E67E22' },
+          { x: 100, y: 1450, w: 300, h: 20, color: '#F39C12', isTop: true }
+        ];
+
+        tohPlatforms.forEach(plat => {
+          if (p.x < plat.x + plat.w && p.x + p.width > plat.x &&
+              p.y + p.height >= plat.y && p.y + p.height <= plat.y + 14 && p.vy >= 0) {
+            p.y = plat.y - p.height;
+            p.vy = 0;
+            p.grounded = true;
+            if (plat.isTop && !state.toh.topReached) {
+              state.toh.topReached = true;
+              state.coins += 500;
+              updateCoinsDisplay();
+              sfx.playWin();
+              addSystemChat("CONGRATULATIONS! You Beat Tower of Hell! +500 Coins!");
+            }
+          }
+        });
+
+        // Rising Lava
+        state.toh.lavaY -= state.toh.lavaSpeed;
+        if (p.y + p.height >= state.toh.lavaY) {
+          resetCharacter();
+        }
+      }
+
+      // Obby Stages Collision
+      if (state.selectedGame === 'obby') {
+        const obbyStages = [
+          { stage: 1, x: 150, y: FLOOR_Y - 10, w: 120, type: 'plat' },
+          { stage: 1, x: 320, y: FLOOR_Y - 10, w: 100, type: 'plat' },
+          { stage: 1, x: 280, y: FLOOR_Y - 5, w: 35, type: 'lava' },
+          { stage: 2, x: 500, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 2 },
+          { stage: 2, x: 680, y: FLOOR_Y - 60, w: 90, type: 'plat' },
+          { stage: 2, x: 820, y: FLOOR_Y - 110, w: 90, type: 'plat' },
+          { stage: 3, x: 1000, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 3 },
+          { stage: 3, x: 1180, y: FLOOR_Y - 10, w: 60, type: 'plat' },
+          { stage: 3, x: 1250, y: FLOOR_Y - 5, w: 50, type: 'lava' },
+          { stage: 3, x: 1320, y: FLOOR_Y - 10, w: 60, type: 'plat' },
+          { stage: 4, x: 1500, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 4 }
+        ];
+
+        obbyStages.forEach(stg => {
+          if (p.x < stg.x + stg.w && p.x + p.width > stg.x &&
+              p.y + p.height >= stg.y && p.y + p.height <= stg.y + 14 && p.vy >= 0) {
+            if (stg.type === 'lava') {
+              resetCharacter();
+            } else {
+              p.y = stg.y - p.height;
+              p.vy = 0;
+              p.grounded = true;
+              if (stg.type === 'checkpoint' && state.obby.stage < stg.stageNum) {
+                state.obby.stage = stg.stageNum;
+                state.obby.checkpointX = stg.x + 20;
+                state.obby.checkpointY = stg.y - p.height;
+                sfx.playWin();
+                addSystemChat(`Reached Stage ${stg.stageNum} Checkpoint!`);
+                setSafeText('game-info-text', `Stage ${stg.stageNum} / 10`);
+              }
+            }
+          }
+        });
+      }
+
+      // World Boundary Rules
+      if (p.x < 0) p.x = 0;
+      if (p.x + p.width > WORLD_WIDTH) p.x = WORLD_WIDTH - p.width;
+      if (p.y > FLOOR_Y + 600) resetCharacter();
+
+      p.animTime += Math.abs(p.vx) > 0.1 ? 0.25 : 0.05;
+      if (p.swingTimer > 0) {
+        p.swingTimer--;
+        if (p.swingTimer === 0) p.isSwinging = false;
+      }
+    }
+
+    function gameLoop() {
+      updatePhysics();
+      renderGame();
+      state.gameLoopReq = requestAnimationFrame(gameLoop);
+    }
+
+    function renderGame() {
+      if (!ctx || !canvas) return;
+
+      const p = state.player;
+      const cameraX = p.x - canvas.width / 2;
+      const cameraY = p.y - canvas.height / 2;
+
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGrad.addColorStop(0, state.selectedGame === 'toh' ? '#2A0845' : '#38BDF8');
+      skyGrad.addColorStop(1, state.selectedGame === 'toh' ? '#6441A5' : '#BAE6FD');
+      ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Platforms
-      platforms.forEach(plat => {
-        ctx.fillStyle = plat.color;
-        ctx.fillRect(plat.x - cameraX, plat.y, plat.width, plat.height);
-        // Top Stud Strip Visual
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(plat.x - cameraX, plat.y, plat.width, 4);
-      });
+      ctx.save();
+      ctx.translate(-cameraX, -cameraY);
 
-      // Draw Studs
-      studs.forEach(stud => {
-        if (!stud.collected) {
-          ctx.fillStyle = '#ffd700';
-          ctx.beginPath();
-          ctx.arc(stud.x - cameraX, stud.y, 8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowColor = '#ffd700';
-          ctx.shadowBlur = 10;
-          ctx.fill();
-          ctx.shadowBlur = 0;
+      // Render World Terrain & Platforms
+      if (state.selectedGame !== 'toh') {
+        ctx.fillStyle = '#A3A2A5';
+        ctx.fillRect(0, FLOOR_Y, WORLD_WIDTH, 320);
+        ctx.fillStyle = '#C8C7CA';
+        ctx.fillRect(0, FLOOR_Y, WORLD_WIDTH, 3);
+
+        // Studs Pattern
+        const startStud = Math.max(0, Math.floor(cameraX / STUD_SIZE) - 2);
+        const endStud = Math.min(2048, Math.ceil((cameraX + canvas.width) / STUD_SIZE) + 2);
+
+        for (let i = startStud; i < endStud; i++) {
+          const studX = i * STUD_SIZE + STUD_SIZE / 2;
+          ctx.fillStyle = '#B8B7BA';
+          ctx.beginPath(); ctx.arc(studX, FLOOR_Y - 2, 5, 0, Math.PI * 2); ctx.fill();
         }
-      });
+      }
 
-      // Draw Player Avatar
-      drawRobloxAvatar(player);
+      // Render Obby Lava & Platforms
+      if (state.selectedGame === 'obby') {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillRect(280, FLOOR_Y - 5, 35, 10);
+        ctx.fillRect(1250, FLOOR_Y - 5, 50, 10);
+
+        // Checkpoint Flags
+        ctx.fillStyle = '#10B981';
+        ctx.fillRect(500, FLOOR_Y - 10, 140, 10);
+        ctx.fillRect(1000, FLOOR_Y - 10, 140, 10);
+        ctx.fillRect(1500, FLOOR_Y - 10, 140, 10);
+      }
+
+      // Render TOH Tower Sections & Lava
+      if (state.selectedGame === 'toh') {
+        const tohPlatforms = [
+          { x: 100, y: 2650, w: 250, h: 20, color: '#95A5A6' },
+          { x: 300, y: 2500, w: 120, h: 20, color: '#3498DB' },
+          { x: 150, y: 2350, w: 100, h: 20, color: '#E74C3C' },
+          { x: 350, y: 2200, w: 110, h: 20, color: '#2ECC71' },
+          { x: 200, y: 2050, w: 90, h: 20, color: '#F1C40F' },
+          { x: 100, y: 1900, w: 120, h: 20, color: '#9B59B6' },
+          { x: 300, y: 1750, w: 100, h: 20, color: '#1ABC9C' },
+          { x: 180, y: 1600, w: 140, h: 20, color: '#E67E22' },
+          { x: 100, y: 1450, w: 300, h: 20, color: '#F39C12', isTop: true }
+        ];
+
+        tohPlatforms.forEach(plat => {
+          ctx.fillStyle = plat.color;
+          ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+          ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+        });
+
+        // TOH Rising Lava Wall
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+        ctx.fillRect(0, state.toh.lavaY, 2000, 1000);
+      }
+
+      // Render Garden Plots & Crops
+      if (state.selectedGame === 'garden') {
+        state.garden.plots.forEach(p => {
+          ctx.fillStyle = '#5D4037';
+          ctx.fillRect(p.x, p.y, 60, 20);
+          ctx.strokeStyle = '#3E2723'; ctx.strokeRect(p.x, p.y, 60, 20);
+
+          if (p.crop) {
+            ctx.fillStyle = p.crop === 'carrot' ? '#E67E22' : '#E74C3C';
+            const cropH = (p.progress / 100) * 24;
+            ctx.fillRect(p.x + 22, p.y - cropH, 16, cropH);
+
+            // Water Progress Bar
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(p.x + 5, p.y - 32, 50, 6);
+            ctx.fillStyle = '#3498DB';
+            ctx.fillRect(p.x + 5, p.y - 32, (p.progress / 100) * 50, 6);
+          }
+        });
+      }
+
+      // Render Mining Underground Voxel Blocks
+      if (state.selectedGame === 'mining') {
+        state.mining.blocks.forEach(b => {
+          ctx.fillStyle = b.color;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.strokeStyle = '#2C3E50'; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h);
+        });
+      }
+
+      // Baseplate Custom Built Blocks
+      for (const b of p.btoolsBlocks) {
+        ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(b.x, b.y, b.w, b.h);
+      }
+
+      // Render Character / Oof Ragdoll
+      if (p.isOofed) {
+        for (const bp of p.oofParts) {
+          ctx.fillStyle = bp.color; ctx.fillRect(bp.x, bp.y, bp.w, bp.h);
+          ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(bp.x, bp.y, bp.w, bp.h);
+        }
+      } else {
+        const walkCycle = p.grounded ? Math.sin(p.animTime) * (Math.abs(p.vx) > 0.2 ? 0.6 : 0.05) : 0;
+        const torsoY = p.y + 18;
+
+        ctx.save();
+
+        // Arms & Legs
+        ctx.fillStyle = p.legsColor;
+        ctx.fillRect(p.x + 4, torsoY + 22, 10, 24); ctx.strokeRect(p.x + 4, torsoY + 22, 10, 24);
+        ctx.fillRect(p.x + 18, torsoY + 22, 10, 24); ctx.strokeRect(p.x + 18, torsoY + 22, 10, 24);
+
+        // Torso
+        ctx.fillStyle = p.torsoColor;
+        ctx.fillRect(p.x + 4, torsoY, 24, 22); ctx.strokeRect(p.x + 4, torsoY, 24, 22);
+
+        // Head & Face
+        const hx = p.x + 6; const hy = torsoY - 18; const hw = 20; const hh = 18;
+        ctx.fillStyle = p.headColor;
+        ctx.fillRect(hx, hy, hw, hh); ctx.strokeRect(hx, hy, hw, hh);
+
+        ctx.fillStyle = '#000';
+        if (p.facing === 1) {
+          ctx.fillRect(p.x + 16, torsoY - 13, 2.5, 3.5);
+          ctx.fillRect(p.x + 21, torsoY - 13, 2.5, 3.5);
+          ctx.fillRect(p.x + 17, torsoY - 6, 5, 2);
+        } else {
+          ctx.fillRect(p.x + 8, torsoY - 13, 2.5, 3.5);
+          ctx.fillRect(p.x + 13, torsoY - 13, 2.5, 3.5);
+          ctx.fillRect(p.x + 9, torsoY - 6, 5, 2);
+        }
+
+        drawHatOnHead(ctx, p.equippedHat, hx, hy, hw, hh, p.facing);
+
+        // Right Arm & Held Tool
+        ctx.fillStyle = p.armColor;
+        ctx.fillRect(p.x + (p.facing === 1 ? 24 : -4), torsoY + 2, 10, 22);
+        ctx.strokeRect(p.x + (p.facing === 1 ? 24 : -4), torsoY + 2, 10, 22);
+
+        ctx.restore();
+
+        // Player Name Tag
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(p.x - 10, p.y - 28, 52, 16);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name, p.x + 16, p.y - 16);
+      }
+
+      ctx.restore();
     }
-
-    function loop() {
-      update();
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    // --- Customizer UI & DataStore Binding ---
-    function initCustomizerUI() {
-      const torsoColors = ['#00a2ff', '#ff4757', '#2ed573', '#ffa500', '#9b59b6'];
-      const legColors = ['#1e272e', '#f1f2f6', '#341f97', '#78e08f'];
-
-      const torsoGrid = document.getElementById('torsoColors');
-      torsoColors.forEach(c => {
-        const div = document.createElement('div');
-        div.className = `color-swatch ${DataStore.data.avatar.torso === c ? 'active' : ''}`;
-        div.style.background = c;
-        div.onclick = () => {
-          DataStore.data.avatar.torso = c;
-          DataStore.save();
-          document.querySelectorAll('#torsoColors .color-swatch').forEach(s => s.classList.remove('active'));
-          div.classList.add('active');
-        };
-        torsoGrid.appendChild(div);
-      });
-
-      const legGrid = document.getElementById('legColors');
-      legColors.forEach(c => {
-        const div = document.createElement('div');
-        div.className = `color-swatch ${DataStore.data.avatar.legs === c ? 'active' : ''}`;
-        div.style.background = c;
-        div.onclick = () => {
-          DataStore.data.avatar.legs = c;
-          DataStore.save();
-          document.querySelectorAll('#legColors .color-swatch').forEach(s => s.classList.remove('active'));
-          div.classList.add('active');
-        };
-        legGrid.appendChild(div);
-      });
-
-      const hats = [
-        { id: 'none', label: 'None' },
-        { id: 'fedora', label: 'Fedora' },
-        { id: 'crown', label: 'Crown' }
-      ];
-      const hatGrid = document.getElementById('hatItems');
-      hats.forEach(h => {
-        const div = document.createElement('div');
-        div.className = `shop-item ${DataStore.data.avatar.hat === h.id ? 'equipped' : ''}`;
-        div.innerText = h.label;
-        div.onclick = () => {
-          DataStore.data.avatar.hat = h.id;
-          DataStore.save();
-          document.querySelectorAll('#hatItems .shop-item').forEach(s => s.classList.remove('equipped'));
-          div.classList.add('equipped');
-        };
-        hatGrid.appendChild(div);
-      });
-    }
-
-    function toggleModal(show) {
-      document.getElementById('customizerModal').style.display = show ? 'flex' : 'none';
-    }
-
-    // Initialize App
-    DataStore.load();
-    initCustomizerUI();
-    loop();
   </script>
 </body>
 </html>
