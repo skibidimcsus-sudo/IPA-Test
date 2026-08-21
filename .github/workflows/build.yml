@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Install, Generate iOS Project, and Build
+      - name: Generate and Build iOS App
         run: |
           npm install
           rm -rf ios
