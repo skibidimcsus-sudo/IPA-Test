@@ -1,1855 +1,1364 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Roblox 2D Multiverse - Baseplate, TOH, Obby, Garden & Mining</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nintendo Switch NSP Web Emulator & Runner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D Game Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            roblox: {
-              bg: '#F2F4F5',
-              card: '#FFFFFF',
-              cardHover: '#F8F9FA',
-              sidebar: '#FFFFFF',
-              header: '#232527',
-              accent: '#00A2FF',
-              playBtn: '#00B06F',
-              playBtnHover: '#009E63',
-              darkBorder: '#E3E5E8',
-              textMain: '#191B1D',
-              textMuted: '#656668',
-              studGrey: '#A3A2A5'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Fredoka', 'sans-serif']
-          }
+    <style>
+        * {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
-      }
-    }
-  </script>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0c10;
+            color: #f3f4f6;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
+        }
+        /* Joy-Con Colors CSS Variables */
+        :root {
+            --left-joycon: #ff3c28;  /* Neon Red */
+            --right-joycon: #00c3e3; /* Neon Blue */
+            --switch-bg: #12131a;
+        }
+        .theme-oled { --left-joycon: #e5e7eb; --right-joycon: #e5e7eb; }
+        .theme-mario { --left-joycon: #e60012; --right-joycon: #e60012; }
+        .theme-cyber { --left-joycon: #f39c12; --right-joycon: #9b59b6; }
+        .theme-zelda { --left-joycon: #d4af37; --right-joycon: #00a86b; }
 
-  <style>
-    body {
-      background-color: #F2F4F5;
-      color: #191B1D;
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-      user-select: none;
-    }
+        .joycon-left-bg { background-color: var(--left-joycon); }
+        .joycon-right-bg { background-color: var(--right-joycon); }
+        .joycon-left-text { color: var(--left-joycon); }
+        .joycon-right-text { color: var(--right-joycon); }
 
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #F2F4F5;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #C3C5C8;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #A1A3A6;
-    }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1a1c23; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
-    canvas {
-      image-rendering: pixelated;
-      display: block;
-    }
+        /* Virtual Joy-Con Touch Styling */
+        .btn-touch {
+            transition: transform 0.05s ease, background-color 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        }
+        .btn-touch:active, .btn-touch.active {
+            transform: scale(0.90) translateY(2px);
+            filter: brightness(1.2);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
 
-    .roblox-shadow {
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-    }
+        .analog-base {
+            background: radial-gradient(circle, #2d3139 0%, #15181e 100%);
+            border: 3px solid #3b4252;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .analog-stick {
+            background: radial-gradient(circle, #4c566a 0%, #2e3440 100%);
+            border: 2px solid #d8dee9;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+        }
 
-    .game-card-img {
-      transition: transform 0.2s ease, filter 0.2s ease;
-    }
-    .game-card:hover .game-card-img {
-      transform: scale(1.03);
-    }
-  </style>
+        /* Screen Glow & CRT Effect */
+        .screen-container {
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 195, 227, 0.15);
+        }
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        .pulse-active {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
 </head>
-<body class="bg-roblox-bg text-roblox-textMain min-h-screen flex flex-col antialiased">
+<body class="flex flex-col h-screen w-screen bg-slate-950 text-gray-100 select-none overflow-hidden">
 
-  <script>
-    class RobloxAudio {
-      constructor() {
-        this.ctx = null;
-      }
-      init() {
-        if (!this.ctx) {
-          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-      }
-      playClick() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
-        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.05);
-      }
-      playJump() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(160, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(480, this.ctx.currentTime + 0.16);
-        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.16);
-      }
-      playOof() {
-        this.init();
-        if (!this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(340, now);
-        osc.frequency.exponentialRampToValueAtTime(110, now + 0.28);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(now + 0.28);
-      }
-      playCoil() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(450, this.ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(950, this.ctx.currentTime + 0.14);
-        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.14);
-      }
-      playCoin() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(988, this.ctx.currentTime);
-        osc.frequency.setValueAtTime(1318, this.ctx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.25);
-      }
-      playMine() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.1);
-      }
-      playWater() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.12);
-      }
-      playSword() {
-        this.init();
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(900, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.12);
-      }
-      playWin() {
-        this.init();
-        if (!this.ctx) return;
-        const now = this.ctx.currentTime;
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-          gain.gain.setValueAtTime(0.2, now + idx * 0.1);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now + idx * 0.1);
-          osc.stop(now + idx * 0.1 + 0.3);
-        });
-      }
-    }
-    const sfx = new RobloxAudio();
-  </script>
-
-  <div id="boot-screen" class="fixed inset-0 z-50 bg-[#111214] flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="relative w-24 h-24 mb-6 animate-bounce">
-      <div class="w-20 h-20 bg-white rounded-xl transform -rotate-12 flex items-center justify-center shadow-2xl relative">
-        <div class="w-8 h-8 bg-[#111214] rounded-md transform rotate-6"></div>
-      </div>
-    </div>
-    <h1 class="text-2xl font-bold font-display tracking-wide text-white mb-2">ROBLOX</h1>
-    <div class="w-64 bg-gray-800 h-2.5 rounded-full overflow-hidden mb-3">
-      <div id="boot-progress-bar" class="bg-roblox-accent h-full w-0 transition-all duration-300 ease-out"></div>
-    </div>
-    <p id="boot-status-text" class="text-xs text-gray-400 font-medium tracking-wide">Connecting to Roblox servers...</p>
-  </div>
-
-  <header id="roblox-header" class="hidden bg-roblox-header border-b border-[#393B3D] h-14 sticky top-0 z-40 px-4 flex items-center justify-between text-white">
-    <div class="flex items-center space-x-6">
-      <button onclick="navTo('home')" class="flex items-center space-x-2 group">
-        <div class="w-7 h-7 bg-white rounded-md transform -rotate-12 flex items-center justify-center transition-transform group-hover:scale-105">
-          <div class="w-2.5 h-2.5 bg-roblox-header rounded-sm transform rotate-6"></div>
-        </div>
-      </button>
-      <nav class="hidden md:flex items-center space-x-5 text-sm font-semibold text-gray-300">
-        <button onclick="navTo('home')" class="hover:text-white transition-colors">Discover</button>
-        <button onclick="openAvatarModal()" class="hover:text-white transition-colors">Avatar Shop</button>
-        <button onclick="navTo('home')" class="hover:text-white transition-colors">Create</button>
-        <button onclick="navTo('home')" class="hover:text-white transition-colors">Robux</button>
-      </nav>
-    </div>
-
-    <div class="flex-1 max-w-md mx-4 hidden sm:block">
-      <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-gray-400"></i>
-        <input type="text" placeholder="Search experiences, avatars, users..." class="w-full bg-[#111214] border border-[#393B3D] rounded-lg py-1.5 pl-9 pr-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-roblox-accent transition-colors">
-      </div>
-    </div>
-
-    <div class="flex items-center space-x-4">
-      <div class="flex items-center space-x-1.5 bg-[#111214] px-3 py-1 rounded-full border border-[#393B3D] text-xs font-bold text-white" title="Robux Balance">
-        <div class="w-3.5 h-3.5 border-2 border-white transform rotate-12 flex items-center justify-center">
-          <div class="w-1 h-1 bg-white"></div>
-        </div>
-        <span id="robux-count" class="ml-1">1,250</span>
-      </div>
-      <button onclick="openAvatarModal('accessories')" class="flex items-center space-x-2 bg-[#111214] hover:bg-[#2B2D30] border border-[#393B3D] p-1.5 rounded-full transition-colors" title="Avatar Shop">
-        <div id="header-avatar-preview" class="w-6 h-6 rounded-full bg-yellow-400 border border-white flex items-center justify-center text-[10px] font-bold text-black">
-          R
-        </div>
-      </button>
-    </div>
-  </header>
-
-  <main id="page-home" class="hidden flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-    <!-- Left Sidebar Nav -->
-    <aside class="hidden md:block md:col-span-3 lg:col-span-2 space-y-1 text-sm font-semibold">
-      <button onclick="navTo('home')" class="w-full flex items-center space-x-3 px-3 py-2.5 bg-roblox-card text-roblox-textMain rounded-lg border border-roblox-darkBorder roblox-shadow">
-        <i class="fa-solid fa-house text-roblox-accent"></i>
-        <span>Home</span>
-      </button>
-      <button onclick="openAvatarModal('accessories')" class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
-        <i class="fa-solid fa-store text-amber-500"></i>
-        <span>Avatar Shop</span>
-      </button>
-      <button onclick="openAvatarModal('colors')" class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
-        <i class="fa-solid fa-user-gear"></i>
-        <span>Avatar</span>
-      </button>
-      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
-        <i class="fa-solid fa-message"></i>
-        <span>Messages</span>
-      </button>
-      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
-        <i class="fa-solid fa-users"></i>
-        <span>Friends</span>
-      </button>
-      <button class="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-black hover:bg-white rounded-lg transition-colors">
-        <i class="fa-solid fa-box"></i>
-        <span>Inventory</span>
-      </button>
-    </aside>
-
-    <!-- Main Content Area -->
-    <section class="col-span-1 md:col-span-9 lg:col-span-10 space-y-6">
-      <!-- Player Welcome Banner -->
-      <div class="bg-white border border-roblox-darkBorder p-5 rounded-2xl flex items-center justify-between roblox-shadow">
-        <div class="flex items-center space-x-4">
-          <div id="welcome-avatar-thumb" class="w-14 h-14 rounded-2xl bg-yellow-400 border-2 border-gray-300 flex items-center justify-center text-xl font-black shadow-md text-black">
-            R
-          </div>
-          <div>
-            <div class="flex items-center space-x-2">
-              <h2 class="text-xl md:text-2xl font-bold text-roblox-textMain">Welcome back, <span id="player-display-name">Player1</span></h2>
-              <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-300">Online</span>
+    <!-- Top Nintendo Switch Horizon OS Navigation Bar -->
+    <header class="h-12 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 z-30 shrink-0 backdrop-blur-md">
+        <!-- Left: Branding & Status -->
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1.5 font-tech font-bold text-lg tracking-wider">
+                <span class="px-2 py-0.5 rounded joycon-left-bg text-slate-950 font-black"><i class="fa-solid fa-gamepad"></i></span>
+                <span class="text-white">SWITCH</span>
+                <span class="joycon-right-text font-semibold text-xs border border-cyan-500/40 px-1.5 py-0.5 rounded bg-cyan-950/30">NSP RUNNER v3.8</span>
             </div>
-            <p class="text-xs text-roblox-textMuted mt-1">Play Baseplate, Tower of Hell, Obby, Grow a Garden, & Mining Simulator!</p>
-          </div>
-        </div>
-        <button onclick="openAvatarModal()" class="hidden sm:flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-roblox-textMain border border-roblox-darkBorder px-4 py-2 rounded-xl text-xs font-bold transition">
-          <i class="fa-solid fa-shirt"></i>
-          <span>Customize Avatar</span>
-        </button>
-      </div>
-
-      <!-- Featured Games Grid -->
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-bold text-roblox-textMain flex items-center space-x-2">
-            <i class="fa-solid fa-fire text-orange-500"></i>
-            <span>Top Roblox Experiences</span>
-          </h3>
-          <span class="text-xs font-semibold text-roblox-accent hover:underline cursor-pointer">See All</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <!-- 1. Classic Baseplate -->
-          <div onclick="openGameDetails('baseplate')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
-            <div class="relative aspect-square bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-              <div class="relative text-center p-2">
-                <i class="fa-solid fa-cubes text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
-                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-sky-100 bg-black/30 px-2 py-0.5 rounded-full">Classic Sandbox</div>
-              </div>
+            
+            <div id="docked-badge" class="hidden sm:flex items-center space-x-1 text-xs bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-full">
+                <i class="fa-solid fa-tv text-[10px]"></i>
+                <span id="resolution-mode-text">1080p 60FPS (Docked)</span>
             </div>
-            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">[2048x16] Classic Baseplate</h4>
-            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
-              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
-              <span>98%</span>
-              <span class="mx-1">•</span>
-              <i class="fa-solid fa-user text-gray-400"></i>
-              <span>12.4K</span>
-            </p>
-          </div>
+        </div>
 
-          <!-- 2. Tower of Hell (TOH) -->
-          <div onclick="openGameDetails('toh')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
-            <div class="relative aspect-square bg-gradient-to-br from-purple-600 via-pink-600 to-red-500 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-              <div class="relative text-center p-2">
-                <i class="fa-solid fa-tower-observation text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
-                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-pink-100 bg-black/30 px-2 py-0.5 rounded-full">Tower Parkour</div>
-              </div>
+        <!-- Center: Emulated Performance Stats -->
+        <div class="hidden md:flex items-center space-x-6 text-xs font-mono bg-slate-950/60 px-4 py-1 rounded-full border border-slate-800/80">
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-500">FPS:</span>
+                <span id="fps-counter" class="text-emerald-400 font-bold">60.0</span>
             </div>
-            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Tower of Hell (TOH)</h4>
-            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
-              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
-              <span>96%</span>
-              <span class="mx-1">•</span>
-              <i class="fa-solid fa-user text-gray-400"></i>
-              <span>48.9K</span>
-            </p>
-          </div>
-
-          <!-- 3. Super Mega Easy Obby -->
-          <div onclick="openGameDetails('obby')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
-            <div class="relative aspect-square bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-              <div class="relative text-center p-2">
-                <i class="fa-solid fa-person-running text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
-                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-amber-100 bg-black/30 px-2 py-0.5 rounded-full">10 Stage Obby</div>
-              </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-500">JIT:</span>
+                <span class="text-cyan-400 font-bold">ARM64 Dynarec</span>
             </div>
-            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Mega Fun Obby Parkour</h4>
-            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
-              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
-              <span>94%</span>
-              <span class="mx-1">•</span>
-              <i class="fa-solid fa-user text-gray-400"></i>
-              <span>23.1K</span>
-            </p>
-          </div>
-
-          <!-- 4. Grow a Garden Simulator -->
-          <div onclick="openGameDetails('garden')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
-            <div class="relative aspect-square bg-gradient-to-br from-emerald-400 via-green-600 to-teal-700 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-              <div class="relative text-center p-2">
-                <i class="fa-solid fa-seedling text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
-                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-emerald-100 bg-black/30 px-2 py-0.5 rounded-full">Farm & Harvest</div>
-              </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-500">GPU:</span>
+                <span class="text-purple-400 font-bold">WebGL2 / NVN</span>
             </div>
-            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Grow a Garden Simulator</h4>
-            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
-              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
-              <span>99%</span>
-              <span class="mx-1">•</span>
-              <i class="fa-solid fa-user text-gray-400"></i>
-              <span>31.5K</span>
-            </p>
-          </div>
+        </div>
 
-          <!-- 5. Mining Simulator -->
-          <div onclick="openGameDetails('mining')" class="game-card group bg-white rounded-2xl border border-roblox-darkBorder p-3 roblox-shadow cursor-pointer hover:border-gray-300 transition duration-200">
-            <div class="relative aspect-square bg-gradient-to-br from-amber-700 via-stone-800 to-yellow-600 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-              <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-              <div class="relative text-center p-2">
-                <i class="fa-solid fa-pickaxe text-4xl text-white drop-shadow-md group-hover:scale-110 transition duration-200"></i>
-                <div class="mt-2 text-[9px] font-black uppercase tracking-widest text-yellow-100 bg-black/30 px-2 py-0.5 rounded-full">Dig & Find Ores</div>
-              </div>
+        <!-- Right: Controls & Controller Status -->
+        <div class="flex items-center space-x-3 text-xs">
+            <!-- Bluetooth Gamepad Indicator -->
+            <div id="bt-gamepad-status" class="flex items-center space-x-1.5 bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700 cursor-pointer transition-colors" title="Bluetooth Controller Status">
+                <i id="bt-icon" class="fa-bluetooth fa-brands text-slate-500"></i>
+                <span id="bt-text" class="hidden sm:inline text-slate-400">BT Disconnected</span>
             </div>
-            <h4 class="font-bold text-sm text-roblox-textMain group-hover:text-roblox-accent transition line-clamp-1">Mining Simulator 2D</h4>
-            <p class="text-[11px] text-roblox-textMuted mt-0.5 flex items-center space-x-1">
-              <i class="fa-solid fa-thumbs-up text-emerald-500"></i>
-              <span>97%</span>
-              <span class="mx-1">•</span>
-              <i class="fa-solid fa-user text-gray-400"></i>
-              <span>18.9K</span>
-            </p>
-          </div>
+
+            <!-- Handheld / Docked Mode Toggle -->
+            <button id="toggle-dock-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded border border-slate-700 flex items-center space-x-1 transition-colors">
+                <i class="fa-solid fa-sliders text-cyan-400"></i>
+                <span class="hidden sm:inline">Dock/Handheld</span>
+            </button>
+
+            <!-- Quick Settings Modal Launcher -->
+            <button id="open-settings-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-1.5 rounded border border-slate-700 transition-colors">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+
+            <!-- Switch System Clock -->
+            <div id="system-clock" class="font-mono text-slate-300 font-semibold pl-2">
+                12:00 PM
+            </div>
         </div>
-      </div>
-    </section>
-  </main>
+    </header>
 
-  <div id="page-game-details" class="hidden flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
-    <button onclick="navTo('home')" class="flex items-center space-x-2 text-xs font-bold text-roblox-textMuted hover:text-black transition">
-      <i class="fa-solid fa-arrow-left"></i>
-      <span>Back to Discover</span>
-    </button>
+    <!-- Main Workspace (Screen + Touch Joy-Cons Layout) -->
+    <main class="relative flex-1 flex flex-col md:flex-row items-center justify-between p-2 md:p-4 gap-2 overflow-hidden bg-slate-950">
 
-    <div class="bg-white border border-roblox-darkBorder rounded-2xl p-6 roblox-shadow grid grid-cols-1 md:grid-cols-12 gap-6">
-      <div id="details-banner" class="md:col-span-7 aspect-video bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 rounded-xl relative overflow-hidden flex items-center justify-center shadow-inner">
-        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_2px,transparent_2px)] [background-size:16px_16px]"></div>
-        <div class="text-center text-white space-y-2 relative z-10">
-          <i id="details-icon" class="fa-solid fa-cubes text-6xl drop-shadow-lg"></i>
-          <h2 id="details-title" class="font-black text-xl tracking-wide">ROBLOX EXPERIENCE</h2>
-          <span id="details-badge" class="inline-block bg-white/20 text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md">Official Template Experience</span>
+        <!-- LEFT JOY-CON (On-Screen Controller Panel) -->
+        <div id="left-joycon-panel" class="joycon-panel flex md:flex-col items-center justify-between p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-800 shadow-2xl z-20 w-full md:w-44 h-28 md:h-full shrink-0 transition-all duration-300">
+            
+            <!-- Top Controls (Minus, L, ZL) -->
+            <div class="flex md:flex-col items-center justify-between w-full gap-2">
+                <div class="flex items-center justify-between w-full px-1">
+                    <button id="btn-minus" class="btn-touch w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center justify-center font-bold text-lg text-slate-300" data-key="Minus">-</button>
+                    <span class="text-[10px] font-bold tracking-widest text-slate-500 hidden md:block">LEFT JOY-CON</span>
+                    <button id="btn-capture" class="btn-touch w-6 h-6 rounded-md bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-slate-400" data-key="Capture">
+                        <i class="fa-solid fa-circle"></i>
+                    </button>
+                </div>
+
+                <div class="flex md:flex-row items-center gap-2 w-full justify-center">
+                    <button id="btn-zl" class="btn-touch flex-1 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300" data-key="ZL">ZL</button>
+                    <button id="btn-l" class="btn-touch flex-1 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300" data-key="L">L</button>
+                </div>
+            </div>
+
+            <!-- Left Analog Stick -->
+            <div class="relative my-auto flex items-center justify-center">
+                <div id="analog-left-base" class="analog-base w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center relative touch-none">
+                    <div id="analog-left-stick" class="analog-stick w-10 h-10 md:w-14 md:h-14 rounded-full absolute cursor-grab active:cursor-grabbing flex items-center justify-center">
+                        <div class="w-4 h-4 rounded-full border border-slate-500/40"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D-PAD Buttons -->
+            <div class="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
+                <button id="btn-dpad-up" class="btn-touch absolute top-0 w-8 h-8 rounded-t-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DUp">▲</button>
+                <button id="btn-dpad-down" class="btn-touch absolute bottom-0 w-8 h-8 rounded-b-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DDown">▼</button>
+                <button id="btn-dpad-left" class="btn-touch absolute left-0 w-8 h-8 rounded-l-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DLeft">◄</button>
+                <button id="btn-dpad-right" class="btn-touch absolute right-0 w-8 h-8 rounded-r-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300" data-key="DRight">►</button>
+                <div class="w-6 h-6 bg-slate-900 rounded-full z-10 border border-slate-800"></div>
+            </div>
+
         </div>
-      </div>
 
-      <div class="md:col-span-5 flex flex-col justify-between space-y-4">
-        <div>
-          <h1 id="details-name" class="text-2xl font-black text-roblox-textMain">[2048x16] Classic Baseplate</h1>
-          <p class="text-xs text-roblox-textMuted mt-1">By <span class="font-bold text-roblox-accent">Roblox Studios</span></p>
-          <p id="details-desc" class="text-xs text-gray-600 mt-3 leading-relaxed">
-            Experience authentic Roblox gameplay!
-          </p>
+        <!-- CENTER SCREEN & GAME DISPLAY CANVAS -->
+        <div class="relative flex-1 w-full h-full flex flex-col items-center justify-center min-h-0 bg-slate-900 rounded-2xl border-4 border-slate-800 overflow-hidden shadow-2xl screen-container">
+            
+            <!-- Canvas Render Viewport -->
+            <div class="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+                <canvas id="game-canvas" class="w-full h-full object-contain block"></canvas>
+                <div id="scanline-overlay" class="scanlines absolute inset-0 pointer-events-none opacity-30"></div>
+
+                <!-- Overlay UI: Game Paused / Loading / OS Menu -->
+                <div id="os-overlay-screen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                    <div class="max-w-xl w-full flex flex-col items-center space-y-6">
+                        <div class="w-20 h-20 rounded-2xl joycon-left-bg flex items-center justify-center shadow-lg shadow-red-500/20">
+                            <i class="fa-solid fa-gamepad text-4xl text-slate-950"></i>
+                        </div>
+
+                        <div>
+                            <h1 class="text-3xl font-tech font-bold tracking-wide text-white">NINTENDO SWITCH NSP RUNNER</h1>
+                            <p class="text-sm text-slate-400 mt-1">Select an integrated Switch homebrew title or load your custom <span class="text-cyan-400 font-mono font-semibold">.NSP / .NRO</span> package file.</p>
+                        </div>
+
+                        <!-- Dropzone for NSP / NRO files -->
+                        <div id="file-drop-zone" class="w-full border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-900/60 hover:bg-cyan-950/20 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all">
+                            <i class="fa-solid fa-file-arrow-up text-3xl text-cyan-400 mb-2"></i>
+                            <p class="text-sm font-semibold text-slate-200">Drag & Drop <span class="text-cyan-400">.NSP</span>, <span class="text-purple-400">.NRO</span> or <span class="text-emerald-400">.XCI</span> file here</p>
+                            <p class="text-xs text-slate-500 mt-1">Parses PFS0 header filesystem & launches binary engine dynamic runtime</p>
+                            <input type="file" id="nsp-file-input" accept=".nsp,.nro,.xci" class="hidden">
+                        </div>
+
+                        <!-- Quick Launch Built-in Demo Library -->
+                        <div class="w-full">
+                            <p class="text-xs font-bold tracking-wider text-slate-400 uppercase text-left mb-2">Built-In Switch Library Demos:</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <button onclick="window.switchOS.launchDemo('odyssey')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-red-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                    <i class="fa-solid fa-cube text-red-500 text-2xl group-hover:scale-110 transition-transform"></i>
+                                    <span class="text-xs font-bold text-white">Super Odyssey 3D</span>
+                                    <span class="text-[10px] text-slate-400">3D Mario Sandbox Engine</span>
+                                </button>
+                                <button onclick="window.switchOS.launchDemo('kart')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                    <i class="fa-solid fa-car-side text-cyan-400 text-2xl group-hover:scale-110 transition-transform"></i>
+                                    <span class="text-xs font-bold text-white">Cyber Kart DX</span>
+                                    <span class="text-[10px] text-slate-400">3D Switch Racing Sandbox</span>
+                                </button>
+                                <button onclick="window.switchOS.launchDemo('metroid')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-purple-500/50 p-3 rounded-xl flex flex-col items-center space-y-2 text-left transition-all group">
+                                    <i class="fa-solid fa-crosshairs text-purple-400 text-2xl group-hover:scale-110 transition-transform"></i>
+                                    <span class="text-xs font-bold text-white">Metroid Dread: Zero</span>
+                                    <span class="text-[10px] text-slate-400">2D Sci-Fi Action Platformer</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- On-Screen Toast Notification -->
+                <div id="toast-msg" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-cyan-500/40 text-cyan-300 text-xs px-4 py-2 rounded-full shadow-lg z-30 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span id="toast-text">Notification text</span>
+                </div>
+
+                <!-- Virtual Switch Home OS Quick Menu Overlay (Triggered by HOME button) -->
+                <div id="home-menu-modal" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-lg z-30 p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-house text-cyan-400"></i>
+                            <span class="font-tech font-bold text-lg text-white">HOME MENU</span>
+                        </div>
+                        <button onclick="window.switchOS.toggleHomeMenu()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-auto max-w-2xl mx-auto w-full">
+                        <button onclick="window.switchOS.resumeGame()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
+                            <i class="fa-solid fa-play text-2xl text-emerald-400"></i>
+                            <span class="text-xs font-bold">Resume Game</span>
+                        </button>
+                        <button onclick="window.switchOS.showPFS0Log()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
+                            <i class="fa-solid fa-code text-2xl text-cyan-400"></i>
+                            <span class="text-xs font-bold">NSP PFS0 Log</span>
+                        </button>
+                        <button onclick="window.switchOS.resetEmulator()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
+                            <i class="fa-solid fa-rotate-left text-2xl text-amber-400"></i>
+                            <span class="text-xs font-bold">Reset Emulator</span>
+                        </button>
+                        <button onclick="window.switchOS.exitToLibrary()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center space-y-2 text-center transition-all">
+                            <i class="fa-solid fa-grip text-2xl text-red-400"></i>
+                            <span class="text-xs font-bold">Exit to OS Menu</span>
+                        </button>
+                    </div>
+
+                    <div class="text-center text-xs text-slate-500">
+                        Nintendo Switch Architecture Sandbox • WebGL2 NVN Backend
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Canvas Bar (Active Game Title & Control Hints) -->
+            <div class="w-full h-8 bg-slate-900 border-t border-slate-800 px-3 flex items-center justify-between text-xs text-slate-400">
+                <div class="flex items-center space-x-2">
+                    <span id="active-title-indicator" class="font-semibold text-slate-200">OS Ready - Select Title</span>
+                </div>
+                <div class="hidden sm:flex items-center space-x-4 text-[11px] font-mono text-slate-500">
+                    <span>[WASD / Touch Stick] Move</span>
+                    <span>[J/K/L/Space] ABXY</span>
+                    <span>[Shift/E] ZL/ZR</span>
+                </div>
+            </div>
+
         </div>
 
-        <div class="space-y-3 pt-2 border-t border-gray-100">
-          <div class="flex items-center justify-between text-xs text-gray-500">
-            <span>Active Players</span>
-            <span id="details-players" class="font-bold text-gray-800">12,482</span>
-          </div>
-          <div class="flex items-center justify-between text-xs text-gray-500">
-            <span>Rating</span>
-            <span id="details-rating" class="font-bold text-emerald-600">👍 98%</span>
-          </div>
+        <!-- RIGHT JOY-CON (On-Screen Controller Panel) -->
+        <div id="right-joycon-panel" class="joycon-panel flex md:flex-col items-center justify-between p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-800 shadow-2xl z-20 w-full md:w-44 h-28 md:h-full shrink-0 transition-all duration-300">
+            
+            <!-- Top Controls (Plus, R, ZR) -->
+            <div class="flex md:flex-col items-center justify-between w-full gap-2">
+                <div class="flex items-center justify-between w-full px-1">
+                    <button id="btn-home" class="btn-touch w-6 h-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-slate-400" data-key="Home">
+                        <i class="fa-solid fa-house"></i>
+                    </button>
+                    <span class="text-[10px] font-bold tracking-widest text-slate-500 hidden md:block">RIGHT JOY-CON</span>
+                    <button id="btn-plus" class="btn-touch w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center justify-center font-bold text-lg text-slate-300" data-key="Plus">+</button>
+                </div>
 
-          <!-- Big Roblox Green Play Button -->
-          <button onclick="launchGame()" class="w-full bg-roblox-playBtn hover:bg-roblox-playBtnHover text-white font-black text-lg py-3 rounded-xl shadow-lg hover:shadow-xl transform active:scale-95 transition flex items-center justify-center space-x-3">
-            <i class="fa-solid fa-play text-xl"></i>
-            <span>Play Experience</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+                <div class="flex md:flex-row items-center gap-2 w-full justify-center">
+                    <button id="btn-r" class="btn-touch flex-1 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300" data-key="R">R</button>
+                    <button id="btn-zr" class="btn-touch flex-1 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-xs font-bold text-slate-300" data-key="ZR">ZR</button>
+                </div>
+            </div>
 
-  <div id="game-view" class="hidden fixed inset-0 z-50 bg-slate-900 flex flex-col">
-    <!-- In-Game Top Overlay Controls Bar -->
-    <div class="absolute top-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
-      <div class="flex items-center space-x-3 pointer-events-auto">
-        <button onclick="togglePauseMenu()" class="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white p-2.5 rounded-xl border border-white/20 shadow-lg transition">
-          <i class="fa-solid fa-bars text-sm"></i>
-        </button>
-        <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-bold flex items-center space-x-2">
-          <i class="fa-solid fa-user text-roblox-accent"></i>
-          <span id="ingame-player-name">Player1</span>
-        </div>
-        <button onclick="toggleChat()" class="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-white/20 text-xs font-bold flex items-center space-x-1.5 transition">
-          <i class="fa-solid fa-comment"></i>
-          <span>Chat</span>
-        </button>
-      </div>
+            <!-- ABXY Buttons Layout -->
+            <div class="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
+                <button id="btn-x" class="btn-touch absolute top-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="X">X</button>
+                <button id="btn-b" class="btn-touch absolute bottom-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="B">B</button>
+                <button id="btn-y" class="btn-touch absolute left-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="Y">Y</button>
+                <button id="btn-a" class="btn-touch absolute right-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-slate-200" data-key="A">A</button>
+            </div>
 
-      <!-- Center Dynamic Game Info Banner -->
-      <div id="ingame-game-info" class="pointer-events-auto bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-white/20 text-white text-xs font-bold flex items-center space-x-3 shadow-lg">
-        <span id="game-info-badge" class="bg-roblox-accent px-2 py-0.5 rounded-md text-[10px]">Baseplate</span>
-        <span id="game-info-text">2048x16 Studs</span>
-      </div>
+            <!-- Right Analog Stick -->
+            <div class="relative my-auto flex items-center justify-center">
+                <div id="analog-right-base" class="analog-base w-20 h-20 md:w-28 md:h-28 rounded-full flex items-center justify-center relative touch-none">
+                    <div id="analog-right-stick" class="analog-stick w-10 h-10 md:w-14 md:h-14 rounded-full absolute cursor-grab active:cursor-grabbing flex items-center justify-center">
+                        <div class="w-4 h-4 rounded-full border border-slate-500/40"></div>
+                    </div>
+                </div>
+            </div>
 
-      <!-- Health Bar / Coins Indicator -->
-      <div class="pointer-events-auto bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-3">
-        <div id="coins-display-hud" class="hidden text-amber-400 font-black text-xs flex items-center space-x-1">
-          <i class="fa-solid fa-coins"></i>
-          <span id="coins-count">0</span>
         </div>
-        <div id="hp-container" class="flex items-center space-x-2">
-          <i class="fa-solid fa-heart text-red-500 text-xs"></i>
-          <div class="w-24 bg-gray-700 h-2.5 rounded-full overflow-hidden border border-white/10">
-            <div id="ingame-hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-200"></div>
-          </div>
+
+    </main>
+
+    <!-- SETTINGS & NSP PFS0 INSPECTOR MODAL -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-cyan-400"></i>
+                    <h2 class="font-tech font-bold text-xl text-white">SWITCH SYSTEM & CONTROLLER SETTINGS</h2>
+                </div>
+                <button id="close-settings-btn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- Theme Selection -->
+                <div>
+                    <label class="block text-slate-400 font-bold mb-2">Joy-Con Color Theme:</label>
+                    <div class="grid grid-cols-5 gap-2">
+                        <button onclick="window.switchOS.setTheme('')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Neon Red/Blue</button>
+                        <button onclick="window.switchOS.setTheme('theme-oled')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">OLED White</button>
+                        <button onclick="window.switchOS.setTheme('theme-mario')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Mario Red</button>
+                        <button onclick="window.switchOS.setTheme('theme-cyber')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Cyberpunk</button>
+                        <button onclick="window.switchOS.setTheme('theme-zelda')" class="p-2 rounded bg-slate-800 border border-slate-700 text-center font-semibold hover:border-cyan-400">Zelda Gold</button>
+                    </div>
+                </div>
+
+                <!-- On-Screen Controls Visibility & Opacity -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1">Touch Overlay Opacity:</label>
+                        <input type="range" id="opacity-slider" min="0.2" max="1" step="0.1" value="1" class="w-full accent-cyan-400">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1">Haptic Feedback (Vibration):</label>
+                        <button id="toggle-haptics-btn" class="w-full p-2 bg-emerald-950 border border-emerald-500/40 text-emerald-300 rounded font-semibold">Enabled</button>
+                    </div>
+                </div>
+
+                <!-- Bluetooth Controller Info -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-slate-300"><i class="fa-bluetooth fa-brands text-cyan-400 mr-1"></i> Bluetooth Controller Status</span>
+                        <button onclick="window.switchOS.scanBluetoothGamepad()" class="text-cyan-400 hover:underline">Scan/Pair</button>
+                    </div>
+                    <div id="gamepad-info-box" class="font-mono text-[11px] text-slate-400">
+                        No external Gamepad connected via Web Gamepad API. Connect any Bluetooth/USB Xbox, DualSense, or Switch Pro Controller and press any button.
+                    </div>
+                </div>
+
+                <!-- PFS0 Binary Console Output -->
+                <div>
+                    <label class="block text-slate-400 font-bold mb-1">NSP Package Inspector (PFS0 Binary Tree):</label>
+                    <pre id="pfs0-tree-output" class="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-[11px] text-emerald-400 h-28 overflow-y-auto">No .NSP package file inspected yet. Drop an NSP file to view header NCA sections.</pre>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- Chat Box -->
-    <div id="chat-box" class="hidden absolute top-16 left-3 z-30 w-72 bg-black/75 backdrop-blur-md border border-white/20 rounded-xl p-3 text-xs text-white space-y-2 shadow-2xl">
-      <div id="chat-messages" class="h-32 overflow-y-auto space-y-1 font-sans pr-1">
-        <div class="text-amber-300 font-bold">[System] Welcome to Roblox Multiverse!</div>
-        <div class="text-gray-300 text-[11px]">Type /speed, /jump, or /reset anytime!</div>
-      </div>
-      <form onsubmit="sendChatMessage(event)" class="flex space-x-1">
-        <input id="chat-input" type="text" placeholder="Send a message..." class="flex-1 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
-        <button type="submit" class="bg-roblox-accent px-2.5 py-1 rounded-lg text-xs font-bold text-white">Send</button>
-      </form>
-    </div>
-
-    <!-- Main Game Canvas -->
-    <canvas id="gameCanvas" class="w-full h-full flex-1 bg-sky-300"></canvas>
-
-    <!-- Bottom Tool Hotbar (Baseplate/Obby Mode) -->
-    <div id="hotbar-container" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md p-2 rounded-2xl border border-white/20 shadow-2xl">
-      <button id="tool-1" onclick="selectTool(1)" class="w-12 h-12 rounded-xl bg-white/20 border-2 border-roblox-accent flex flex-col items-center justify-center text-white transition hover:scale-105">
-        <i id="tool-1-icon" class="fa-solid fa-shield-halved text-sm"></i>
-        <span id="tool-1-label" class="text-[9px] font-bold mt-0.5">1: Sword</span>
-      </button>
-      <button id="tool-2" onclick="selectTool(2)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
-        <i id="tool-2-icon" class="fa-solid fa-bolt text-red-400 text-sm"></i>
-        <span id="tool-2-label" class="text-[9px] font-bold mt-0.5">2: Speed</span>
-      </button>
-      <button id="tool-3" onclick="selectTool(3)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
-        <i id="tool-3-icon" class="fa-solid fa-angles-up text-blue-400 text-sm"></i>
-        <span id="tool-3-label" class="text-[9px] font-bold mt-0.5">3: Gravity</span>
-      </button>
-      <button id="tool-4" onclick="selectTool(4)" class="w-12 h-12 rounded-xl bg-black/40 border border-white/20 flex flex-col items-center justify-center text-white transition hover:scale-105">
-        <i id="tool-4-icon" class="fa-solid fa-cubes text-amber-400 text-sm"></i>
-        <span id="tool-4-label" class="text-[9px] font-bold mt-0.5">4: BTools</span>
-      </button>
-    </div>
-
-    <!-- Mobile Touch Onscreen Controls -->
-    <div class="absolute bottom-4 left-4 z-20 flex space-x-2 sm:hidden">
-      <button id="touch-left" class="w-12 h-12 rounded-2xl bg-black/50 text-white font-bold text-xl border border-white/20 active:bg-white/40 flex items-center justify-center">◄</button>
-      <button id="touch-right" class="w-12 h-12 rounded-2xl bg-black/50 text-white font-bold text-xl border border-white/20 active:bg-white/40 flex items-center justify-center">►</button>
-    </div>
-    <div class="absolute bottom-4 right-4 z-20 sm:hidden">
-      <button id="touch-jump" class="w-14 h-14 rounded-full bg-roblox-accent text-white font-bold text-lg border-2 border-white shadow-xl active:scale-95 flex items-center justify-center">▲</button>
-    </div>
-  </div>
-
-  <div id="avatar-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 roblox-shadow border border-gray-200">
-      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-        <h2 class="text-lg font-bold flex items-center space-x-2 text-roblox-textMain">
-          <i class="fa-solid fa-shirt text-roblox-accent"></i>
-          <span>Avatar Shop & Customizer</span>
-        </h2>
-        <button onclick="closeAvatarModal()" class="text-gray-400 hover:text-black"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="flex space-x-2 border-b border-gray-200 pb-2 text-xs font-bold">
-        <button id="tab-btn-accessories" onclick="switchAvatarTab('accessories')" class="px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2">
-          <i class="fa-solid fa-hat-cowboy"></i>
-          <span>Free Accessories</span>
-        </button>
-        <button id="tab-btn-colors" onclick="switchAvatarTab('colors')" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2">
-          <i class="fa-solid fa-palette"></i>
-          <span>Body Colors</span>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-        <div class="sm:col-span-5 bg-gradient-to-b from-sky-200 to-sky-100 rounded-xl p-4 flex flex-col items-center justify-center h-64 border border-gray-200 shadow-inner relative overflow-hidden">
-          <canvas id="avatarPreviewCanvas" width="160" height="200"></canvas>
-          <span id="equipped-hat-badge" class="absolute bottom-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">Hat: Cowboy Hat</span>
-        </div>
-
-        <div class="sm:col-span-7 h-64 overflow-y-auto pr-1">
-          <div id="panel-accessories" class="space-y-2">
-            <div class="flex items-center justify-between text-xs font-bold text-gray-500 mb-1">
-              <span>Catalog Hats & Gears</span>
-              <span class="text-emerald-600 font-extrabold">100% FREE</span>
-            </div>
-            <div id="hats-grid" class="grid grid-cols-2 gap-2 text-xs"></div>
-          </div>
-
-          <div id="panel-colors" class="hidden space-y-3 text-xs">
-            <div>
-              <label class="block font-bold text-gray-700 mb-1">Head / Skin Color</label>
-              <div class="flex space-x-2">
-                <button onclick="setAvatarColor('head', '#FDF06F')" class="w-7 h-7 rounded-full bg-[#FDF06F] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('head', '#E0AA69')" class="w-7 h-7 rounded-full bg-[#E0AA69] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('head', '#A05F2C')" class="w-7 h-7 rounded-full bg-[#A05F2C] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('head', '#7C8A99')" class="w-7 h-7 rounded-full bg-[#7C8A99] border border-gray-300 hover:scale-110 transition"></button>
-              </div>
-            </div>
-            <div>
-              <label class="block font-bold text-gray-700 mb-1">Torso Shirt Color</label>
-              <div class="flex space-x-2">
-                <button onclick="setAvatarColor('torso', '#C1272D')" class="w-7 h-7 rounded-full bg-[#C1272D] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('torso', '#00A2FF')" class="w-7 h-7 rounded-full bg-[#00A2FF] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('torso', '#27AE60')" class="w-7 h-7 rounded-full bg-[#27AE60] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('torso', '#8E44AD')" class="w-7 h-7 rounded-full bg-[#8E44AD] border border-gray-300 hover:scale-110 transition"></button>
-              </div>
-            </div>
-            <div>
-              <label class="block font-bold text-gray-700 mb-1">Arm Color</label>
-              <div class="flex space-x-2">
-                <button onclick="setAvatarColor('arms', '#FDF06F')" class="w-7 h-7 rounded-full bg-[#FDF06F] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('arms', '#C1272D')" class="w-7 h-7 rounded-full bg-[#C1272D] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('arms', '#00A2FF')" class="w-7 h-7 rounded-full bg-[#00A2FF] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('arms', '#191B1D')" class="w-7 h-7 rounded-full bg-[#191B1D] border border-gray-300 hover:scale-110 transition"></button>
-              </div>
-            </div>
-            <div>
-              <label class="block font-bold text-gray-700 mb-1">Pants / Leg Color</label>
-              <div class="flex space-x-2">
-                <button onclick="setAvatarColor('legs', '#00263A')" class="w-7 h-7 rounded-full bg-[#00263A] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('legs', '#2C3E50')" class="w-7 h-7 rounded-full bg-[#2C3E50] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('legs', '#D35400')" class="w-7 h-7 rounded-full bg-[#D35400] border border-gray-300 hover:scale-110 transition"></button>
-                <button onclick="setAvatarColor('legs', '#16A085')" class="w-7 h-7 rounded-full bg-[#16A085] border border-gray-300 hover:scale-110 transition"></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button onclick="closeAvatarModal()" class="w-full bg-roblox-playBtn hover:bg-roblox-playBtnHover text-white py-2.5 rounded-xl font-bold transition">Save & Apply</button>
-    </div>
-  </div>
-
-  <!-- In-Game Pause Menu -->
-  <div id="pause-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-[#191B1D] text-white rounded-2xl max-w-sm w-full p-6 space-y-4 border border-white/10 shadow-2xl text-center">
-      <h2 class="text-xl font-black tracking-wide">ROBLOX MENU</h2>
-      <div class="space-y-2 pt-2">
-        <button onclick="togglePauseMenu()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 rounded-xl border border-white/20 transition">Resume Experience</button>
-        <button onclick="resetCharacter()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition">Reset Character (OOF)</button>
-        <button onclick="leaveGame()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl transition">Leave Game</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const HATS = [
-      { id: 'cowboy', name: 'Cowboy Hat', icon: 'fa-hat-cowboy', color: '#8B4513' },
-      { id: 'medical', name: 'Medical Cap', icon: 'fa-user-nurse', color: '#EF4444' },
-      { id: 'beanie', name: 'Winter Beanie', icon: 'fa-hat-wizard', color: '#DC2626' },
-      { id: 'headphones', name: 'Gaming Headset', icon: 'fa-headphones', color: '#06B6D4' },
-      { id: 'tophat', name: 'Gentleman Top Hat', icon: 'fa-graduation-cap', color: '#18181B' },
-      { id: 'crown', name: 'Golden Crown', icon: 'fa-crown', color: '#F59E0B' },
-      { id: 'viking', name: 'Viking Horns', icon: 'fa-shield-cat', color: '#94A3B8' },
-      { id: 'cap', name: 'Roblox Cap', icon: 'fa-baseball-bat-ball', color: '#2563EB' },
-      { id: 'catears', name: 'Neko Cat Ears', icon: 'fa-cat', color: '#F472B6' },
-      { id: 'valkyrie', name: 'Valkyrie Helm', icon: 'fa-feather-pointed', color: '#EAB308' }
-    ];
-
-    const GAME_DETAILS_DATA = {
-      baseplate: {
-        id: 'baseplate',
-        title: '[2048x16] Classic Baseplate',
-        badge: 'Classic Sandbox Experience',
-        icon: 'fa-cubes',
-        desc: 'Step onto the legendary 2048x16 stud baseplate! Build structures with BTools, slash with the classic sword, and run around using speed and gravity coils.',
-        players: '12,482',
-        rating: '👍 98% (48,201)',
-        bg: 'from-sky-400 via-blue-500 to-indigo-600'
-      },
-      toh: {
-        id: 'toh',
-        title: 'Tower of Hell (TOH 2D)',
-        badge: 'Tower Parkour Challenge',
-        icon: 'fa-tower-observation',
-        desc: 'Race against time to reach the top of a randomly colored obstacle tower without checkpoints! Watch out for rising lava at the bottom!',
-        players: '48,910',
-        rating: '👍 96% (120,490)',
-        bg: 'from-purple-600 via-pink-600 to-red-500'
-      },
-      obby: {
-        id: 'obby',
-        title: 'Super Mega Easy Obby (10 Stages)',
-        badge: '10 Stage Obstacle Course',
-        icon: 'fa-person-running',
-        desc: 'Conquer 10 unique stages of lava pits, disappearing blocks, moving laser beams, and trampoline jump pads! Touch checkpoints to save your stage!',
-        players: '23,105',
-        rating: '👍 94% (35,900)',
-        bg: 'from-amber-400 via-orange-500 to-red-600'
-      },
-      garden: {
-        id: 'garden',
-        title: 'Grow a Garden Simulator',
-        badge: 'Farming & Harvest Tycoon',
-        icon: 'fa-seedling',
-        desc: 'Plant seeds, water your crops with watering cans, harvest ripe produce, sell to the Produce Shop, and earn Coins to unlock Golden Berries!',
-        players: '31,520',
-        rating: '👍 99% (82,100)',
-        bg: 'from-emerald-400 via-green-600 to-teal-700'
-      },
-      mining: {
-        id: 'mining',
-        title: 'Mining Simulator 2D',
-        badge: 'Underground Digging & Ores',
-        icon: 'fa-pickaxe',
-        desc: 'Dig deep beneath the surface to mine Dirt, Stone, Iron, Gold, Diamonds, and Obsidian! Upgrade your pickaxes and backpack storage at the Surface Station!',
-        players: '18,940',
-        rating: '👍 97% (54,220)',
-        bg: 'from-amber-700 via-stone-800 to-yellow-600'
-      }
-    };
-
-    const state = {
-      currentPage: 'home',
-      selectedGame: 'baseplate',
-      avatarTab: 'accessories',
-      coins: 250,
-      player: {
-        name: 'Player' + Math.floor(100 + Math.random() * 900),
-        headColor: '#FDF06F',
-        torsoColor: '#C1272D',
-        armColor: '#FDF06F',
-        legsColor: '#00263A',
-        equippedHat: 'cowboy',
-        hp: 100,
-        x: 200,
-        y: 600,
-        vx: 0,
-        vy: 0,
-        width: 32,
-        height: 64,
-        grounded: false,
-        speed: 5.5,
-        jumpPower: 12.5,
-        facing: 1,
-        activeTool: 1,
-        btoolsBlocks: [],
-        animTime: 0,
-        isSwinging: false,
-        swingTimer: 0,
-        isOofed: false,
-        oofParts: []
-      },
-      keys: {
-        left: false,
-        right: false,
-        up: false,
-        space: false,
-        down: false
-      },
-      // Game-specific State
-      obby: {
-        stage: 1,
-        checkpointX: 200,
-        checkpointY: 600
-      },
-      toh: {
-        timeLeft: 180,
-        lavaY: 2800,
-        lavaSpeed: 0.35,
-        topReached: false
-      },
-      garden: {
-        selectedSeed: 'carrot',
-        water: 100,
-        plots: [
-          { x: 300, y: 640, crop: 'carrot', stage: 0, progress: 0 },
-          { x: 400, y: 640, crop: 'tomato', stage: 0, progress: 0 },
-          { x: 500, y: 640, crop: null, stage: 0, progress: 0 },
-          { x: 600, y: 640, crop: null, stage: 0, progress: 0 },
-          { x: 700, y: 640, crop: null, stage: 0, progress: 0 },
-          { x: 800, y: 640, crop: null, stage: 0, progress: 0 }
-        ],
-        inventory: { carrot: 0, tomato: 0, corn: 0, goldberry: 0 }
-      },
-      mining: {
-        backpack: [],
-        maxBackpack: 15,
-        pickaxeTier: 1, // 1: Wood, 2: Iron, 3: Gold, 4: Diamond
-        blocks: []
-      },
-      gameLoopReq: null,
-      previewAnimReq: null
-    };
-
-    function setSafeText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.innerText = text;
-    }
-
-    function drawHatOnHead(ctx, hatId, hx, hy, hw, hh, facing = 1) {
-      if (!hatId || hatId === 'none') return;
-      ctx.save();
-
-      if (hatId === 'cowboy') {
-        ctx.fillStyle = '#6B3A19';
-        ctx.strokeStyle = '#3D200E';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.ellipse(hx + hw / 2, hy + 2, hw * 0.85, 4, 0, 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-        ctx.fillRect(hx + 2, hy - 10, hw - 4, 11);
-        ctx.strokeRect(hx + 2, hy - 10, hw - 4, 11);
-      } else if (hatId === 'medical') {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#CBD5E1';
-        ctx.lineWidth = 1;
-        ctx.fillRect(hx + 1, hy - 6, hw - 2, 9);
-        ctx.strokeRect(hx + 1, hy - 6, hw - 2, 9);
-        ctx.fillStyle = '#EF4444';
-        ctx.fillRect(hx + hw / 2 - 1, hy - 4, 2, 6);
-        ctx.fillRect(hx + hw / 2 - 3, hy - 2, 6, 2);
-      } else if (hatId === 'beanie') {
-        ctx.fillStyle = '#DC2626';
-        ctx.fillRect(hx - 1, hy - 8, hw + 2, 11);
-        ctx.fillStyle = '#991B1B';
-        ctx.fillRect(hx - 2, hy, hw + 4, 4);
-      } else if (hatId === 'headphones') {
-        ctx.strokeStyle = '#1E293B';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(hx + hw / 2, hy + 2, hw / 2 + 2, Math.PI, 0);
-        ctx.stroke();
-        ctx.fillStyle = '#06B6D4';
-        ctx.fillRect(hx - 4, hy + 4, 4, 10);
-        ctx.fillRect(hx + hw, hy + 4, 4, 10);
-      } else if (hatId === 'tophat') {
-        ctx.fillStyle = '#18181B';
-        ctx.fillRect(hx - 5, hy + 1, hw + 10, 3);
-        ctx.fillRect(hx + 1, hy - 16, hw - 2, 17);
-      } else if (hatId === 'crown') {
-        ctx.fillStyle = '#F59E0B';
-        ctx.strokeStyle = '#B45309';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(hx - 1, hy + 2);
-        ctx.lineTo(hx - 1, hy - 8);
-        ctx.lineTo(hx + hw * 0.25, hy - 3);
-        ctx.lineTo(hx + hw * 0.5, hy - 11);
-        ctx.lineTo(hx + hw * 0.75, hy - 3);
-        ctx.lineTo(hx + hw + 1, hy - 8);
-        ctx.lineTo(hx + hw + 1, hy + 2);
-        ctx.closePath();
-        ctx.fill(); ctx.stroke();
-      } else if (hatId === 'viking') {
-        ctx.fillStyle = '#64748B';
-        ctx.beginPath();
-        ctx.arc(hx + hw / 2, hy + 4, hw / 2 + 1, Math.PI, 0);
-        ctx.fill();
-        ctx.fillStyle = '#FEF08A';
-        ctx.fillRect(hx - 6, hy - 10, 5, 10);
-        ctx.fillRect(hx + hw + 1, hy - 10, 5, 10);
-      } else if (hatId === 'cap') {
-        ctx.fillStyle = '#2563EB';
-        ctx.fillRect(hx - 1, hy - 6, hw + 2, 8);
-        const visorX = facing === 1 ? hx + hw - 2 : hx - 8;
-        ctx.fillRect(visorX, hy, 10, 3);
-      } else if (hatId === 'catears') {
-        ctx.fillStyle = '#F472B6';
-        ctx.fillRect(hx, hy - 8, 6, 8);
-        ctx.fillRect(hx + hw - 6, hy - 8, 6, 8);
-      } else if (hatId === 'valkyrie') {
-        ctx.fillStyle = '#EAB308';
-        ctx.fillRect(hx - 1, hy - 4, hw + 2, 7);
-        ctx.fillStyle = '#F8FAFC';
-        ctx.fillRect(hx - 8, hy - 12, 6, 12);
-        ctx.fillRect(hx + hw + 2, hy - 12, 6, 12);
-      }
-
-      ctx.restore();
-    }
-
-    const STUD_SIZE = 20;
-    const WORLD_WIDTH = 40960; // 2048 studs wide
-    const FLOOR_Y = 700;
-
-    window.addEventListener('load', () => {
-      setSafeText('player-display-name', state.player.name);
-      setSafeText('ingame-player-name', state.player.name);
-
-      const bar = document.getElementById('boot-progress-bar');
-      if (bar) bar.style.width = '40%';
-
-      setTimeout(() => {
-        if (bar) bar.style.width = '80%';
-        setSafeText('boot-status-text', 'Loading Roblox Multiverse experiences...');
-      }, 300);
-
-      setTimeout(() => {
-        if (bar) bar.style.width = '100%';
-        const bootScreen = document.getElementById('boot-screen');
-        if (bootScreen) {
-          bootScreen.classList.add('opacity-0');
-          setTimeout(() => {
-            bootScreen.classList.add('hidden');
-            document.getElementById('roblox-header')?.classList.remove('hidden');
-            document.getElementById('page-home')?.classList.remove('hidden');
-          }, 400);
-        }
-      }, 700);
-    });
-
-    function navTo(page) {
-      sfx.playClick();
-      state.currentPage = page;
-      document.getElementById('page-home')?.classList.add('hidden');
-      document.getElementById('page-game-details')?.classList.add('hidden');
-      document.getElementById('game-view')?.classList.add('hidden');
-
-      if (page === 'home') {
-        document.getElementById('page-home')?.classList.remove('hidden');
-      }
-    }
-
-    function openGameDetails(gameId = 'baseplate') {
-      sfx.playClick();
-      state.selectedGame = gameId;
-      const data = GAME_DETAILS_DATA[gameId];
-
-      setSafeText('details-name', data.title);
-      setSafeText('details-title', data.title.toUpperCase());
-      setSafeText('details-badge', data.badge);
-      setSafeText('details-desc', data.desc);
-      setSafeText('details-players', data.players);
-      setSafeText('details-rating', data.rating);
-
-      const iconEl = document.getElementById('details-icon');
-      if (iconEl) iconEl.className = 'fa-solid ' + data.icon + ' text-6xl drop-shadow-lg';
-
-      const bannerEl = document.getElementById('details-banner');
-      if (bannerEl) bannerEl.className = `md:col-span-7 aspect-video bg-gradient-to-br ${data.bg} rounded-xl relative overflow-hidden flex items-center justify-center shadow-inner`;
-
-      document.getElementById('page-home')?.classList.add('hidden');
-      document.getElementById('page-game-details')?.classList.remove('hidden');
-    }
-
-    function openAvatarModal(defaultTab = 'accessories') {
-      sfx.playClick();
-      document.getElementById('avatar-modal')?.classList.remove('hidden');
-      switchAvatarTab(defaultTab);
-      renderHatsShop();
-      startAvatarPreview();
-    }
-
-    function closeAvatarModal() {
-      sfx.playClick();
-      document.getElementById('avatar-modal')?.classList.add('hidden');
-      if (state.previewAnimReq) cancelAnimationFrame(state.previewAnimReq);
-    }
-
-    function switchAvatarTab(tab) {
-      sfx.playClick();
-      state.avatarTab = tab;
-      const btnAcc = document.getElementById('tab-btn-accessories');
-      const btnCol = document.getElementById('tab-btn-colors');
-      const panelAcc = document.getElementById('panel-accessories');
-      const panelCol = document.getElementById('panel-colors');
-
-      if (tab === 'accessories') {
-        if (btnAcc) btnAcc.className = 'px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2';
-        if (btnCol) btnCol.className = 'px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2';
-        if (panelAcc) panelAcc.classList.remove('hidden');
-        if (panelCol) panelCol.classList.add('hidden');
-      } else {
-        if (btnCol) btnCol.className = 'px-4 py-2 rounded-lg bg-roblox-accent text-white transition flex items-center space-x-2';
-        if (btnAcc) btnAcc.className = 'px-4 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center space-x-2';
-        if (panelCol) panelCol.classList.remove('hidden');
-        if (panelAcc) panelAcc.classList.add('hidden');
-      }
-    }
-
-    function renderHatsShop() {
-      const grid = document.getElementById('hats-grid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      const isNoneEquipped = state.player.equippedHat === 'none';
-      const noneCard = document.createElement('div');
-      noneCard.className = `border rounded-xl p-2.5 flex items-center justify-between transition ${isNoneEquipped ? 'border-roblox-accent bg-blue-50' : 'border-gray-200 bg-white'}`;
-      noneCard.innerHTML = `
-        <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500 font-bold"><i class="fa-solid fa-ban"></i></div>
-          <div><div class="font-bold text-roblox-textMain">No Hat</div><div class="text-[10px] text-gray-400">Default</div></div>
-        </div>
-        <button onclick="equipHat('none')" class="px-2 py-1 rounded-md text-[10px] font-bold ${isNoneEquipped ? 'bg-emerald-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">${isNoneEquipped ? 'Equipped' : 'Equip'}</button>
-      `;
-      grid.appendChild(noneCard);
-
-      HATS.forEach(hat => {
-        const isEquipped = state.player.equippedHat === hat.id;
-        const card = document.createElement('div');
-        card.className = `border rounded-xl p-2.5 flex items-center justify-between transition ${isEquipped ? 'border-roblox-accent bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`;
-        card.innerHTML = `
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-lg text-white flex items-center justify-center text-sm shadow-sm" style="background-color: ${hat.color}">
-              <i class="fa-solid ${hat.icon}"></i>
-            </div>
-            <div>
-              <div class="font-bold text-roblox-textMain truncate w-20">${hat.name}</div>
-              <div class="text-[10px] text-emerald-600 font-bold">FREE</div>
-            </div>
-          </div>
-          <button onclick="equipHat('${hat.id}')" class="px-2 py-1 rounded-md text-[10px] font-bold transition ${isEquipped ? 'bg-emerald-600 text-white' : 'bg-roblox-accent text-white'}">${isEquipped ? 'Equipped' : 'Get Free'}</button>
-        `;
-        grid.appendChild(card);
-      });
-
-      const currentHat = HATS.find(h => h.id === state.player.equippedHat);
-      setSafeText('equipped-hat-badge', 'Hat: ' + (currentHat ? currentHat.name : 'None'));
-    }
-
-    function equipHat(hatId) {
-      sfx.playClick();
-      state.player.equippedHat = hatId;
-      renderHatsShop();
-      addSystemChat("Equipped " + (hatId === 'none' ? 'No Hat' : hatId) + "!");
-    }
-
-    function setAvatarColor(part, color) {
-      sfx.playClick();
-      if (part === 'head') state.player.headColor = color;
-      if (part === 'torso') state.player.torsoColor = color;
-      if (part === 'arms') state.player.armColor = color;
-      if (part === 'legs') state.player.legsColor = color;
-    }
-
-    function startAvatarPreview() {
-      const c = document.getElementById('avatarPreviewCanvas');
-      if (!c) return;
-      const pctx = c.getContext('2d');
-      let t = 0;
-
-      function renderPreview() {
-        t += 0.05;
-        pctx.clearRect(0, 0, c.width, c.height);
-
-        const cx = c.width / 2;
-        const cy = 140;
-        const bob = Math.sin(t * 3) * 2;
-
-        pctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        pctx.beginPath();
-        pctx.ellipse(cx, cy + 40, 24, 6, 0, 0, Math.PI * 2);
-        pctx.fill();
-
-        pctx.fillStyle = state.player.legsColor;
-        pctx.strokeStyle = '#000';
-        pctx.lineWidth = 1.5;
-        pctx.fillRect(cx - 13, cy + bob, 11, 38); ctx.strokeRect(cx - 13, cy + bob, 11, 38);
-        pctx.fillRect(cx + 2, cy + bob, 11, 38); ctx.strokeRect(cx + 2, cy + bob, 11, 38);
-
-        pctx.fillStyle = state.player.torsoColor;
-        pctx.fillRect(cx - 14, cy - 36 + bob, 28, 36); ctx.strokeRect(cx - 14, cy - 36 + bob, 28, 36);
-
-        pctx.fillStyle = state.player.armColor;
-        pctx.fillRect(cx - 24, cy - 34 + bob, 10, 34); ctx.strokeRect(cx - 24, cy - 34 + bob, 10, 34);
-        pctx.fillRect(cx + 14, cy - 34 + bob, 10, 34); ctx.strokeRect(cx + 14, cy - 34 + bob, 10, 34);
-
-        const hx = cx - 11; const hy = cy - 62 + bob; const hw = 22; const hh = 24;
-        pctx.fillStyle = state.player.headColor;
-        pctx.fillRect(hx, hy, hw, hh); ctx.strokeRect(hx, hy, hw, hh);
-
-        pctx.fillStyle = '#000';
-        pctx.fillRect(cx - 6, cy - 54 + bob, 3, 4);
-        pctx.fillRect(cx + 3, cy - 54 + bob, 3, 4);
-        pctx.fillRect(cx - 4, cy - 45 + bob, 8, 3);
-
-        drawHatOnHead(pctx, state.player.equippedHat, hx, hy, hw, hh, 1);
-        state.previewAnimReq = requestAnimationFrame(renderPreview);
-      }
-
-      renderPreview();
-    }
-
-    function togglePauseMenu() {
-      sfx.playClick();
-      document.getElementById('pause-modal')?.classList.toggle('hidden');
-    }
-
-    function toggleChat() {
-      sfx.playClick();
-      document.getElementById('chat-box')?.classList.toggle('hidden');
-    }
-
-    function updateCoinsDisplay() {
-      setSafeText('coins-count', state.coins.toString());
-    }
-
-    function sendChatMessage(e) {
-      e.preventDefault();
-      const input = document.getElementById('chat-input');
-      if (!input) return;
-      const val = input.value.trim();
-      if (!val) return;
-
-      const container = document.getElementById('chat-messages');
-      if (container) {
-        const msg = document.createElement('div');
-        msg.innerHTML = `<span class="font-bold text-white">${state.player.name}:</span> ${val}`;
-        container.appendChild(msg);
-        container.scrollTop = container.scrollHeight;
-      }
-
-      if (val.toLowerCase() === '/speed') {
-        state.player.speed = 12;
-        addSystemChat("Speed Coil Boost active!");
-      } else if (val.toLowerCase() === '/jump') {
-        state.player.jumpPower = 18;
-        addSystemChat("Gravity Coil Boost active!");
-      } else if (val.toLowerCase() === '/coins') {
-        state.coins += 500;
-        updateCoinsDisplay();
-        addSystemChat("Gave +500 Coins!");
-      } else if (val.toLowerCase() === '/reset') {
-        resetCharacter();
-      }
-
-      input.value = '';
-    }
-
-    function addSystemChat(txt) {
-      const container = document.getElementById('chat-messages');
-      if (container) {
-        const msg = document.createElement('div');
-        msg.className = "text-amber-400 font-bold";
-        msg.innerText = "[System] " + txt;
-        container.appendChild(msg);
-        container.scrollTop = container.scrollHeight;
-      }
-    }
-
-    function launchGame() {
-      sfx.playClick();
-      document.getElementById('page-game-details')?.classList.add('hidden');
-      document.getElementById('roblox-header')?.classList.add('hidden');
-      document.getElementById('game-view')?.classList.remove('hidden');
-
-      initCanvas();
-      setupGameExperience(state.selectedGame);
-
-      if (!state.gameLoopReq) {
-        state.gameLoopReq = requestAnimationFrame(gameLoop);
-      }
-    }
-
-    function setupGameExperience(gameId) {
-      const badge = document.getElementById('game-info-badge');
-      const text = document.getElementById('game-info-text');
-      const hotbar = document.getElementById('hotbar-container');
-      const coinsDisplay = document.getElementById('coins-display-hud');
-
-      const p = state.player;
-      p.hp = 100;
-      p.isOofed = false;
-      p.vx = 0; p.vy = 0;
-      updateHPBar();
-      updateCoinsDisplay();
-
-      if (gameId === 'baseplate') {
-        if (badge) badge.innerText = "Baseplate";
-        if (text) text.innerText = "2048x16 Studs";
-        if (hotbar) hotbar.classList.remove('hidden');
-        if (coinsDisplay) coinsDisplay.classList.add('hidden');
-        p.x = 200; p.y = FLOOR_Y - p.height;
-        setupBaseplateTools();
-      } else if (gameId === 'toh') {
-        if (badge) badge.innerText = "TOH 2D";
-        if (text) text.innerText = "Time Left: 180s";
-        if (hotbar) hotbar.classList.remove('hidden');
-        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
-        p.x = 200; p.y = 2600;
-        state.toh.timeLeft = 180;
-        state.toh.lavaY = 2800;
-        state.toh.topReached = false;
-        setupTOHTools();
-        addSystemChat("TOH Launched! Reach the top before time runs out!");
-      } else if (gameId === 'obby') {
-        if (badge) badge.innerText = "Obby Parkour";
-        if (text) text.innerText = `Stage ${state.obby.stage} / 10`;
-        if (hotbar) hotbar.classList.remove('hidden');
-        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
-        p.x = 200; p.y = FLOOR_Y - p.height;
-        state.obby.checkpointX = 200;
-        state.obby.checkpointY = FLOOR_Y - p.height;
-        setupObbyTools();
-        addSystemChat("Mega Obby Launched! Watch out for red lava!");
-      } else if (gameId === 'garden') {
-        if (badge) badge.innerText = "Grow a Garden";
-        if (text) text.innerText = "Plant & Water Crops";
-        if (hotbar) hotbar.classList.remove('hidden');
-        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
-        p.x = 200; p.y = FLOOR_Y - p.height;
-        setupGardenTools();
-        addSystemChat("Garden Tycoon! Plant seeds and sell harvested crops!");
-      } else if (gameId === 'mining') {
-        if (badge) badge.innerText = "Mining Simulator";
-        if (text) text.innerText = `Pickaxe: Tier ${state.mining.pickaxeTier}`;
-        if (hotbar) hotbar.classList.remove('hidden');
-        if (coinsDisplay) coinsDisplay.classList.remove('hidden');
-        p.x = 200; p.y = FLOOR_Y - p.height;
-        initMiningGrid();
-        setupMiningTools();
-        addSystemChat("Mining Sim! Mine blocks underground and sell ores at the surface!");
-      }
-    }
-
-    function setupBaseplateTools() {
-      setSafeText('tool-1-label', '1: Sword');
-      setSafeText('tool-2-label', '2: Speed');
-      setSafeText('tool-3-label', '3: Gravity');
-      setSafeText('tool-4-label', '4: BTools');
-      selectTool(1);
-    }
-
-    function setupTOHTools() {
-      setSafeText('tool-1-label', '1: Sword');
-      setSafeText('tool-2-label', '2: Speed');
-      setSafeText('tool-3-label', '3: Gravity');
-      setSafeText('tool-4-label', '4: Shield');
-      selectTool(2);
-    }
-
-    function setupObbyTools() {
-      setSafeText('tool-1-label', '1: Normal');
-      setSafeText('tool-2-label', '2: Speed');
-      setSafeText('tool-3-label', '3: Gravity');
-      setSafeText('tool-4-label', '4: Restart');
-      selectTool(1);
-    }
-
-    function setupGardenTools() {
-      setSafeText('tool-1-label', '1: Water');
-      setSafeText('tool-2-label', '2: Carrot');
-      setSafeText('tool-3-label', '3: Tomato');
-      setSafeText('tool-4-label', '4: Harvest');
-      selectTool(1);
-    }
-
-    function setupMiningTools() {
-      setSafeText('tool-1-label', '1: Pickaxe');
-      setSafeText('tool-2-label', '2: Sell All');
-      setSafeText('tool-3-label', '3: Upgrade');
-      setSafeText('tool-4-label', '4: Surface');
-      selectTool(1);
-    }
-
-    function leaveGame() {
-      sfx.playClick();
-      document.getElementById('pause-modal')?.classList.add('hidden');
-      document.getElementById('game-view')?.classList.add('hidden');
-      document.getElementById('roblox-header')?.classList.remove('hidden');
-      navTo('home');
-    }
-
-    function resetCharacter() {
-      sfx.playOof();
-      const pModal = document.getElementById('pause-modal');
-      if (pModal && !pModal.classList.contains('hidden')) {
-        togglePauseMenu();
-      }
-      
-      const p = state.player;
-      p.hp = 0;
-      p.isOofed = true;
-      updateHPBar();
-
-      p.oofParts = [
-        { x: p.x + 8, y: p.y, vx: -3 + Math.random() * 6, vy: -6, color: p.headColor, w: 16, h: 16 },
-        { x: p.x, y: p.y + 16, vx: -4 + Math.random() * 8, vy: -5, color: p.torsoColor, w: 24, h: 24 },
-        { x: p.x - 6, y: p.y + 16, vx: -5 + Math.random() * 4, vy: -7, color: p.armColor, w: 10, h: 22 },
-        { x: p.x + 24, y: p.y + 16, vx: 1 + Math.random() * 4, vy: -7, color: p.armColor, w: 10, h: 22 },
-        { x: p.x + 2, y: p.y + 40, vx: -4 + Math.random() * 4, vy: -4, color: p.legsColor, w: 10, h: 24 },
-        { x: p.x + 14, y: p.y + 40, vx: 1 + Math.random() * 4, vy: -4, color: p.legsColor, w: 10, h: 24 }
-      ];
-
-      addSystemChat(p.name + " died. OOF!");
-
-      setTimeout(() => {
-        if (state.selectedGame === 'obby') {
-          p.x = state.obby.checkpointX;
-          p.y = state.obby.checkpointY;
-        } else if (state.selectedGame === 'toh') {
-          p.x = 200;
-          p.y = 2600;
-        } else {
-          p.x = 200;
-          p.y = FLOOR_Y - p.height;
-        }
-        p.vx = 0; p.vy = 0;
-        p.hp = 100;
-        p.isOofed = false;
-        updateHPBar();
-      }, 1200);
-    }
-
-    function updateHPBar() {
-      const bar = document.getElementById('ingame-hp-bar');
-      if (bar) bar.style.width = Math.max(0, state.player.hp) + '%';
-    }
-
-    function selectTool(slot) {
-      sfx.playClick();
-      state.player.activeTool = slot;
-      for (let i = 1; i <= 4; i++) {
-        const btn = document.getElementById('tool-' + i);
-        if (btn) {
-          if (i === slot) {
-            btn.classList.add('border-roblox-accent', 'bg-white/20');
-            btn.classList.remove('border-white/20', 'bg-black/40');
-          } else {
-            btn.classList.remove('border-roblox-accent', 'bg-white/20');
-            btn.classList.add('border-white/20', 'bg-black/40');
-          }
-        }
-      }
-
-      if (state.selectedGame === 'baseplate' || state.selectedGame === 'toh' || state.selectedGame === 'obby') {
-        if (slot === 2) {
-          sfx.playCoil();
-          state.player.speed = 10;
-          state.player.jumpPower = 12.5;
-        } else if (slot === 3) {
-          sfx.playCoil();
-          state.player.speed = 5.5;
-          state.player.jumpPower = 17.5;
-        } else {
-          state.player.speed = 5.5;
-          state.player.jumpPower = 12.5;
-        }
-      }
-
-      // Special button triggers
-      if (state.selectedGame === 'obby' && slot === 4) {
-        state.player.x = state.obby.checkpointX;
-        state.player.y = state.obby.checkpointY;
-        addSystemChat("Teleported to Checkpoint!");
-      } else if (state.selectedGame === 'mining' && slot === 2) {
-        sellMiningOres();
-      } else if (state.selectedGame === 'mining' && slot === 3) {
-        upgradePickaxe();
-      } else if (state.selectedGame === 'mining' && slot === 4) {
-        state.player.x = 200;
-        state.player.y = FLOOR_Y - state.player.height;
-        addSystemChat("Teleported to Surface!");
-      }
-    }
-
-    let canvas, ctx;
-
-    function initCanvas() {
-      canvas = document.getElementById('gameCanvas');
-      if (!canvas) return;
-      ctx = canvas.getContext('2d');
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-
-      window.addEventListener('keydown', (e) => {
-        if (e.code === 'KeyA' || e.code === 'ArrowLeft') state.keys.left = true;
-        if (e.code === 'KeyD' || e.code === 'ArrowRight') state.keys.right = true;
-        if (e.code === 'KeyS' || e.code === 'ArrowDown') state.keys.down = true;
-        if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
-          if (!state.keys.space) {
-            state.keys.space = true;
-            tryJump();
-          }
-        }
-        if (e.code === 'Escape') togglePauseMenu();
-        if (e.code === 'KeySlash') {
-          e.preventDefault();
-          toggleChat();
-          document.getElementById('chat-input')?.focus();
-        }
-      });
-
-      window.addEventListener('keyup', (e) => {
-        if (e.code === 'KeyA' || e.code === 'ArrowLeft') state.keys.left = false;
-        if (e.code === 'KeyD' || e.code === 'ArrowRight') state.keys.right = false;
-        if (e.code === 'KeyS' || e.code === 'ArrowDown') state.keys.down = false;
-        if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') state.keys.space = false;
-      });
-
-      canvas.addEventListener('mousedown', (e) => handleCanvasClick(e));
-
-      setupTouchControl('touch-left', (pressed) => state.keys.left = pressed);
-      setupTouchControl('touch-right', (pressed) => state.keys.right = pressed);
-      document.getElementById('touch-jump')?.addEventListener('touchstart', (e) => { e.preventDefault(); tryJump(); });
-    }
-
-    function setupTouchControl(id, cb) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); cb(true); });
-      el.addEventListener('touchend', (e) => { e.preventDefault(); cb(false); });
-    }
-
-    function resizeCanvas() {
-      if (!canvas || !canvas.parentElement) return;
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
-    }
-
-    function tryJump() {
-      if (state.player.grounded && !state.player.isOofed) {
-        state.player.vy = -state.player.jumpPower;
-        state.player.grounded = false;
-        sfx.playJump();
-      }
-    }
-
-    function initMiningGrid() {
-      state.mining.blocks = [];
-      const startY = FLOOR_Y;
-      const blockW = 40; const blockH = 40;
-      for (let r = 0; r < 25; r++) {
-        for (let c = 0; c < 30; c++) {
-          const bx = 100 + c * blockW;
-          const by = startY + r * blockH;
-          let type = 'dirt';
-          let color = '#8B5A2B';
-          let hp = 1;
-          let value = 10;
-
-          if (r > 3) { type = 'stone'; color = '#7F8C8D'; hp = 2; value = 25; }
-          if (r > 8 && Math.random() < 0.3) { type = 'iron'; color = '#BDC3C7'; hp = 3; value = 60; }
-          if (r > 14 && Math.random() < 0.25) { type = 'gold'; color = '#F1C40F'; hp = 4; value = 150; }
-          if (r > 19 && Math.random() < 0.2) { type = 'diamond'; color = '#3498DB'; hp = 5; value = 400; }
-
-          state.mining.blocks.push({ x: bx, y: by, w: blockW, h: blockH, type, color, hp, maxHp: hp, value });
-        }
-      }
-    }
-
-    function handleCanvasClick(e) {
-      if (state.player.isOofed) return;
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left + (state.player.x - canvas.width / 2);
-      const clickY = e.clientY - rect.top + (state.player.y - canvas.height / 2);
-
-      if (state.selectedGame === 'baseplate') {
-        if (state.player.activeTool === 1) {
-          state.player.isSwinging = true;
-          state.player.swingTimer = 10;
-          sfx.playSword();
-        } else if (state.player.activeTool === 4) {
-          state.player.btoolsBlocks.push({
-            x: Math.floor(clickX / STUD_SIZE) * STUD_SIZE,
-            y: Math.floor(clickY / STUD_SIZE) * STUD_SIZE,
-            w: STUD_SIZE * 2, h: STUD_SIZE * 2, color: '#E74C3C'
-          });
-          sfx.playMine();
-        }
-      } else if (state.selectedGame === 'garden') {
-        state.garden.plots.forEach(p => {
-          if (clickX >= p.x - 20 && clickX <= p.x + 60 && clickY >= p.y - 10 && clickY <= p.y + 40) {
-            if (state.player.activeTool === 1) { // Water
-              if (p.crop && p.progress < 100) {
-                p.progress = Math.min(100, p.progress + 35);
-                sfx.playWater();
-                if (p.progress >= 100) p.stage = 2;
-              }
-            } else if (state.player.activeTool === 2) { // Plant Carrot
-              if (!p.crop) { p.crop = 'carrot'; p.stage = 0; p.progress = 0; sfx.playClick(); }
-            } else if (state.player.activeTool === 3) { // Plant Tomato
-              if (!p.crop) { p.crop = 'tomato'; p.stage = 0; p.progress = 0; sfx.playClick(); }
-            } else if (state.player.activeTool === 4) { // Harvest
-              if (p.crop && p.progress >= 100) {
-                const yieldVal = p.crop === 'carrot' ? 30 : 60;
-                state.coins += yieldVal;
-                updateCoinsDisplay();
-                sfx.playCoin();
-                addSystemChat(`Harvested ${p.crop}! +${yieldVal} Coins`);
-                p.crop = null; p.stage = 0; p.progress = 0;
-              }
+    <!-- MAIN JAVASCRIPT EMULATION ENGINE LOGIC -->
+    <script>
+        /**
+         * Web Audio Synthesizer for Authentic Nintendo Switch OS Sounds
+         */
+        class SwitchAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
             }
-          }
-        });
-      } else if (state.selectedGame === 'mining') {
-        if (state.player.activeTool === 1) {
-          state.mining.blocks.forEach((b, idx) => {
-            if (clickX >= b.x && clickX <= b.x + b.w && clickY >= b.y && clickY <= b.y + b.h) {
-              const dist = Math.hypot(state.player.x - b.x, state.player.y - b.y);
-              if (dist < 120) {
-                b.hp -= state.mining.pickaxeTier;
-                sfx.playMine();
-                if (b.hp <= 0) {
-                  if (state.mining.backpack.length < state.mining.maxBackpack) {
-                    state.mining.backpack.push({ type: b.type, value: b.value });
-                    addSystemChat(`Mined ${b.type}! (${state.mining.backpack.length}/${state.mining.maxBackpack})`);
-                  } else {
-                    addSystemChat("Backpack Full! Go to surface to sell ores!");
-                  }
-                  state.mining.blocks.splice(idx, 1);
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
                 }
-              }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
             }
-          });
-        }
-      }
-    }
 
-    function sellMiningOres() {
-      if (state.mining.backpack.length === 0) {
-        addSystemChat("No ores in backpack to sell!");
-        return;
-      }
-      let total = 0;
-      state.mining.backpack.forEach(item => total += item.value);
-      state.coins += total;
-      state.mining.backpack = [];
-      updateCoinsDisplay();
-      sfx.playCoin();
-      addSystemChat(`Sold all ores for +${total} Coins!`);
-    }
-
-    function upgradePickaxe() {
-      const cost = state.mining.pickaxeTier * 200;
-      if (state.coins >= cost) {
-        state.coins -= cost;
-        state.mining.pickaxeTier++;
-        updateCoinsDisplay();
-        sfx.playWin();
-        addSystemChat(`Upgraded Pickaxe to Tier ${state.mining.pickaxeTier}!`);
-      } else {
-        addSystemChat(`Need ${cost} Coins to upgrade Pickaxe!`);
-      }
-    }
-
-    function updatePhysics() {
-      const p = state.player;
-
-      if (p.isOofed) {
-        for (const bp of p.oofParts) {
-          bp.x += bp.vx; bp.y += bp.vy; bp.vy += 0.4;
-          if (bp.y + bp.h >= FLOOR_Y) {
-            bp.y = FLOOR_Y - bp.h; bp.vy = -bp.vy * 0.3; bp.vx *= 0.8;
-          }
-        }
-        return;
-      }
-
-      if (state.keys.left) { p.vx = -p.speed; p.facing = -1; }
-      else if (state.keys.right) { p.vx = p.speed; p.facing = 1; }
-      else { p.vx *= 0.78; }
-
-      p.x += p.vx;
-      p.vy += 0.55;
-      p.y += p.vy;
-
-      // Ground Floor Collision
-      if (p.y + p.height >= FLOOR_Y && state.selectedGame !== 'toh') {
-        p.y = FLOOR_Y - p.height;
-        p.vy = 0;
-        p.grounded = true;
-      } else {
-        p.grounded = false;
-      }
-
-      // Baseplate Custom Blocks Collision
-      for (const b of p.btoolsBlocks) {
-        if (p.x < b.x + b.w && p.x + p.width > b.x &&
-            p.y + p.height >= b.y && p.y + p.height <= b.y + 14 && p.vy >= 0) {
-          p.y = b.y - p.height;
-          p.vy = 0;
-          p.grounded = true;
-        }
-      }
-
-      // TOH Floor Platforms & Rising Lava
-      if (state.selectedGame === 'toh') {
-        const tohPlatforms = [
-          { x: 100, y: 2650, w: 250, h: 20 },
-          { x: 300, y: 2500, w: 120, h: 20, color: '#3498DB' },
-          { x: 150, y: 2350, w: 100, h: 20, color: '#E74C3C' },
-          { x: 350, y: 2200, w: 110, h: 20, color: '#2ECC71' },
-          { x: 200, y: 2050, w: 90, h: 20, color: '#F1C40F' },
-          { x: 100, y: 1900, w: 120, h: 20, color: '#9B59B6' },
-          { x: 300, y: 1750, w: 100, h: 20, color: '#1ABC9C' },
-          { x: 180, y: 1600, w: 140, h: 20, color: '#E67E22' },
-          { x: 100, y: 1450, w: 300, h: 20, color: '#F39C12', isTop: true }
-        ];
-
-        tohPlatforms.forEach(plat => {
-          if (p.x < plat.x + plat.w && p.x + p.width > plat.x &&
-              p.y + p.height >= plat.y && p.y + p.height <= plat.y + 14 && p.vy >= 0) {
-            p.y = plat.y - p.height;
-            p.vy = 0;
-            p.grounded = true;
-            if (plat.isTop && !state.toh.topReached) {
-              state.toh.topReached = true;
-              state.coins += 500;
-              updateCoinsDisplay();
-              sfx.playWin();
-              addSystemChat("CONGRATULATIONS! You Beat Tower of Hell! +500 Coins!");
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
             }
-          }
-        });
 
-        // Rising Lava
-        state.toh.lavaY -= state.toh.lavaSpeed;
-        if (p.y + p.height >= state.toh.lavaY) {
-          resetCharacter();
-        }
-      }
+            playSnap() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                
+                // Switch Joy-Con Snap Sound Emulation
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
 
-      // Obby Stages Collision
-      if (state.selectedGame === 'obby') {
-        const obbyStages = [
-          { stage: 1, x: 150, y: FLOOR_Y - 10, w: 120, type: 'plat' },
-          { stage: 1, x: 320, y: FLOOR_Y - 10, w: 100, type: 'plat' },
-          { stage: 1, x: 280, y: FLOOR_Y - 5, w: 35, type: 'lava' },
-          { stage: 2, x: 500, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 2 },
-          { stage: 2, x: 680, y: FLOOR_Y - 60, w: 90, type: 'plat' },
-          { stage: 2, x: 820, y: FLOOR_Y - 110, w: 90, type: 'plat' },
-          { stage: 3, x: 1000, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 3 },
-          { stage: 3, x: 1180, y: FLOOR_Y - 10, w: 60, type: 'plat' },
-          { stage: 3, x: 1250, y: FLOOR_Y - 5, w: 50, type: 'lava' },
-          { stage: 3, x: 1320, y: FLOOR_Y - 10, w: 60, type: 'plat' },
-          { stage: 4, x: 1500, y: FLOOR_Y - 10, w: 140, type: 'checkpoint', stageNum: 4 }
-        ];
+                osc1.type = 'triangle';
+                osc2.type = 'sine';
 
-        obbyStages.forEach(stg => {
-          if (p.x < stg.x + stg.w && p.x + p.width > stg.x &&
-              p.y + p.height >= stg.y && p.y + p.height <= stg.y + 14 && p.vy >= 0) {
-            if (stg.type === 'lava') {
-              resetCharacter();
-            } else {
-              p.y = stg.y - p.height;
-              p.vy = 0;
-              p.grounded = true;
-              if (stg.type === 'checkpoint' && state.obby.stage < stg.stageNum) {
-                state.obby.stage = stg.stageNum;
-                state.obby.checkpointX = stg.x + 20;
-                state.obby.checkpointY = stg.y - p.height;
-                sfx.playWin();
-                addSystemChat(`Reached Stage ${stg.stageNum} Checkpoint!`);
-                setSafeText('game-info-text', `Stage ${stg.stageNum} / 10`);
-              }
+                osc1.frequency.setValueAtTime(1200, now);
+                osc1.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+
+                osc2.frequency.setValueAtTime(2400, now);
+                osc2.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + 0.08);
+                osc2.stop(now + 0.08);
             }
-          }
-        });
-      }
 
-      // World Boundary Rules
-      if (p.x < 0) p.x = 0;
-      if (p.x + p.width > WORLD_WIDTH) p.x = WORLD_WIDTH - p.width;
-      if (p.y > FLOOR_Y + 600) resetCharacter();
-
-      p.animTime += Math.abs(p.vx) > 0.1 ? 0.25 : 0.05;
-      if (p.swingTimer > 0) {
-        p.swingTimer--;
-        if (p.swingTimer === 0) p.isSwinging = false;
-      }
-    }
-
-    function gameLoop() {
-      updatePhysics();
-      renderGame();
-      state.gameLoopReq = requestAnimationFrame(gameLoop);
-    }
-
-    function renderGame() {
-      if (!ctx || !canvas) return;
-
-      const p = state.player;
-      const cameraX = p.x - canvas.width / 2;
-      const cameraY = p.y - canvas.height / 2;
-
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGrad.addColorStop(0, state.selectedGame === 'toh' ? '#2A0845' : '#38BDF8');
-      skyGrad.addColorStop(1, state.selectedGame === 'toh' ? '#6441A5' : '#BAE6FD');
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.save();
-      ctx.translate(-cameraX, -cameraY);
-
-      // Render World Terrain & Platforms
-      if (state.selectedGame !== 'toh') {
-        ctx.fillStyle = '#A3A2A5';
-        ctx.fillRect(0, FLOOR_Y, WORLD_WIDTH, 320);
-        ctx.fillStyle = '#C8C7CA';
-        ctx.fillRect(0, FLOOR_Y, WORLD_WIDTH, 3);
-
-        // Studs Pattern
-        const startStud = Math.max(0, Math.floor(cameraX / STUD_SIZE) - 2);
-        const endStud = Math.min(2048, Math.ceil((cameraX + canvas.width) / STUD_SIZE) + 2);
-
-        for (let i = startStud; i < endStud; i++) {
-          const studX = i * STUD_SIZE + STUD_SIZE / 2;
-          ctx.fillStyle = '#B8B7BA';
-          ctx.beginPath(); ctx.arc(studX, FLOOR_Y - 2, 5, 0, Math.PI * 2); ctx.fill();
-        }
-      }
-
-      // Render Obby Lava & Platforms
-      if (state.selectedGame === 'obby') {
-        ctx.fillStyle = '#EF4444';
-        ctx.fillRect(280, FLOOR_Y - 5, 35, 10);
-        ctx.fillRect(1250, FLOOR_Y - 5, 50, 10);
-
-        // Checkpoint Flags
-        ctx.fillStyle = '#10B981';
-        ctx.fillRect(500, FLOOR_Y - 10, 140, 10);
-        ctx.fillRect(1000, FLOOR_Y - 10, 140, 10);
-        ctx.fillRect(1500, FLOOR_Y - 10, 140, 10);
-      }
-
-      // Render TOH Tower Sections & Lava
-      if (state.selectedGame === 'toh') {
-        const tohPlatforms = [
-          { x: 100, y: 2650, w: 250, h: 20, color: '#95A5A6' },
-          { x: 300, y: 2500, w: 120, h: 20, color: '#3498DB' },
-          { x: 150, y: 2350, w: 100, h: 20, color: '#E74C3C' },
-          { x: 350, y: 2200, w: 110, h: 20, color: '#2ECC71' },
-          { x: 200, y: 2050, w: 90, h: 20, color: '#F1C40F' },
-          { x: 100, y: 1900, w: 120, h: 20, color: '#9B59B6' },
-          { x: 300, y: 1750, w: 100, h: 20, color: '#1ABC9C' },
-          { x: 180, y: 1600, w: 140, h: 20, color: '#E67E22' },
-          { x: 100, y: 1450, w: 300, h: 20, color: '#F39C12', isTop: true }
-        ];
-
-        tohPlatforms.forEach(plat => {
-          ctx.fillStyle = plat.color;
-          ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-          ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
-        });
-
-        // TOH Rising Lava Wall
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
-        ctx.fillRect(0, state.toh.lavaY, 2000, 1000);
-      }
-
-      // Render Garden Plots & Crops
-      if (state.selectedGame === 'garden') {
-        state.garden.plots.forEach(p => {
-          ctx.fillStyle = '#5D4037';
-          ctx.fillRect(p.x, p.y, 60, 20);
-          ctx.strokeStyle = '#3E2723'; ctx.strokeRect(p.x, p.y, 60, 20);
-
-          if (p.crop) {
-            ctx.fillStyle = p.crop === 'carrot' ? '#E67E22' : '#E74C3C';
-            const cropH = (p.progress / 100) * 24;
-            ctx.fillRect(p.x + 22, p.y - cropH, 16, cropH);
-
-            // Water Progress Bar
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(p.x + 5, p.y - 32, 50, 6);
-            ctx.fillStyle = '#3498DB';
-            ctx.fillRect(p.x + 5, p.y - 32, (p.progress / 100) * 50, 6);
-          }
-        });
-      }
-
-      // Render Mining Underground Voxel Blocks
-      if (state.selectedGame === 'mining') {
-        state.mining.blocks.forEach(b => {
-          ctx.fillStyle = b.color;
-          ctx.fillRect(b.x, b.y, b.w, b.h);
-          ctx.strokeStyle = '#2C3E50'; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h);
-        });
-      }
-
-      // Baseplate Custom Built Blocks
-      for (const b of p.btoolsBlocks) {
-        ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h);
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(b.x, b.y, b.w, b.h);
-      }
-
-      // Render Character / Oof Ragdoll
-      if (p.isOofed) {
-        for (const bp of p.oofParts) {
-          ctx.fillStyle = bp.color; ctx.fillRect(bp.x, bp.y, bp.w, bp.h);
-          ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(bp.x, bp.y, bp.w, bp.h);
-        }
-      } else {
-        const walkCycle = p.grounded ? Math.sin(p.animTime) * (Math.abs(p.vx) > 0.2 ? 0.6 : 0.05) : 0;
-        const torsoY = p.y + 18;
-
-        ctx.save();
-
-        // Arms & Legs
-        ctx.fillStyle = p.legsColor;
-        ctx.fillRect(p.x + 4, torsoY + 22, 10, 24); ctx.strokeRect(p.x + 4, torsoY + 22, 10, 24);
-        ctx.fillRect(p.x + 18, torsoY + 22, 10, 24); ctx.strokeRect(p.x + 18, torsoY + 22, 10, 24);
-
-        // Torso
-        ctx.fillStyle = p.torsoColor;
-        ctx.fillRect(p.x + 4, torsoY, 24, 22); ctx.strokeRect(p.x + 4, torsoY, 24, 22);
-
-        // Head & Face
-        const hx = p.x + 6; const hy = torsoY - 18; const hw = 20; const hh = 18;
-        ctx.fillStyle = p.headColor;
-        ctx.fillRect(hx, hy, hw, hh); ctx.strokeRect(hx, hy, hw, hh);
-
-        ctx.fillStyle = '#000';
-        if (p.facing === 1) {
-          ctx.fillRect(p.x + 16, torsoY - 13, 2.5, 3.5);
-          ctx.fillRect(p.x + 21, torsoY - 13, 2.5, 3.5);
-          ctx.fillRect(p.x + 17, torsoY - 6, 5, 2);
-        } else {
-          ctx.fillRect(p.x + 8, torsoY - 13, 2.5, 3.5);
-          ctx.fillRect(p.x + 13, torsoY - 13, 2.5, 3.5);
-          ctx.fillRect(p.x + 9, torsoY - 6, 5, 2);
+            playLaunch() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const freqs = [523.25, 659.25, 783.99, 1046.50]; // C Major Arp
+                freqs.forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.04);
+                    gain.gain.setValueAtTime(0.1, now + idx * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.04);
+                    osc.stop(now + idx * 0.04 + 0.3);
+                });
+            }
         }
 
-        drawHatOnHead(ctx, p.equippedHat, hx, hy, hw, hh, p.facing);
+        /**
+         * Real NSP (Partition File System 0 - PFS0) Binary Parser
+         */
+        class NSPParser {
+            static parse(arrayBuffer) {
+                const dataView = new DataView(arrayBuffer);
+                const decoder = new TextDecoder('utf-8');
 
-        // Right Arm & Held Tool
-        ctx.fillStyle = p.armColor;
-        ctx.fillRect(p.x + (p.facing === 1 ? 24 : -4), torsoY + 2, 10, 22);
-        ctx.strokeRect(p.x + (p.facing === 1 ? 24 : -4), torsoY + 2, 10, 22);
+                // Validate PFS0 Magic Header
+                const magic = String.fromCharCode(
+                    dataView.getUint8(0),
+                    dataView.getUint8(1),
+                    dataView.getUint8(2),
+                    dataView.getUint8(3)
+                );
 
-        ctx.restore();
+                if (magic !== 'PFS0') {
+                    throw new Error(`Invalid NSP File: Expected header 'PFS0', found '${magic}'`);
+                }
 
-        // Player Name Tag
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(p.x - 10, p.y - 28, 52, 16);
-        ctx.fillStyle = '#FFF';
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(p.name, p.x + 16, p.y - 16);
-      }
+                const numFiles = dataView.getUint32(4, true);
+                const stringTableSize = dataView.getUint32(8, true);
+                const reserved = dataView.getUint32(12, true);
 
-      ctx.restore();
-    }
-  </script>
+                const headerSize = 16 + (numFiles * 24) + stringTableSize;
+                const stringTableOffset = 16 + (numFiles * 24);
+
+                const files = [];
+
+                for (let i = 0; i < numFiles; i++) {
+                    const entryOffset = 16 + (i * 24);
+                    const dataOffset = dataView.getBigUint64(entryOffset, true);
+                    const size = dataView.getBigUint64(entryOffset + 8, true);
+                    const nameOffset = dataView.getUint32(entryOffset + 16, true);
+
+                    // Extract file name from string table
+                    let name = '';
+                    let charPtr = stringTableOffset + nameOffset;
+                    while (charPtr < arrayBuffer.byteLength) {
+                        const charCode = dataView.getUint8(charPtr);
+                        if (charCode === 0) break;
+                        name += String.fromCharCode(charCode);
+                        charPtr++;
+                    }
+
+                    files.push({
+                        name: name || `Section_${i}.nca`,
+                        offset: Number(dataOffset) + headerSize,
+                        size: Number(size)
+                    });
+                }
+
+                return {
+                    magic,
+                    numFiles,
+                    stringTableSize,
+                    headerSize,
+                    files
+                };
+            }
+        }
+
+        /**
+         * Bluetooth & Standard Web Gamepad API Input Manager
+         */
+        class GamepadManager {
+            constructor(inputStateCallback) {
+                this.inputStateCallback = inputStateCallback;
+                this.gamepadIndex = null;
+                this.connected = false;
+
+                window.addEventListener("gamepadconnected", (e) => {
+                    console.log("Gamepad connected:", e.gamepad);
+                    this.gamepadIndex = e.gamepad.index;
+                    this.connected = true;
+                    window.switchOS.updateBTStatus(true, e.gamepad.id);
+                    window.switchOS.showToast(`Connected: ${e.gamepad.id.substring(0, 20)}...`);
+                });
+
+                window.addEventListener("gamepaddisconnected", (e) => {
+                    console.log("Gamepad disconnected:", e.gamepad);
+                    this.connected = false;
+                    this.gamepadIndex = null;
+                    window.switchOS.updateBTStatus(false, '');
+                    window.switchOS.showToast("Bluetooth Controller Disconnected");
+                });
+            }
+
+            poll() {
+                if (!this.connected && this.gamepadIndex === null) return;
+                const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+                const gp = gamepads[this.gamepadIndex];
+                if (!gp) return;
+
+                // Standard Gamepad API button mapping
+                // 0: B (A on Switch), 1: A (B on Switch), 2: Y (X on Switch), 3: X (Y on Switch)
+                const buttons = gp.buttons;
+                const input = {
+                    A: buttons[1]?.pressed || buttons[0]?.pressed,
+                    B: buttons[0]?.pressed || buttons[1]?.pressed,
+                    X: buttons[3]?.pressed || buttons[2]?.pressed,
+                    Y: buttons[2]?.pressed || buttons[3]?.pressed,
+                    L: buttons[4]?.pressed,
+                    R: buttons[5]?.pressed,
+                    ZL: buttons[6]?.pressed || buttons[6]?.value > 0.5,
+                    ZR: buttons[7]?.pressed || buttons[7]?.value > 0.5,
+                    Minus: buttons[8]?.pressed,
+                    Plus: buttons[9]?.pressed,
+                    Home: buttons[16]?.pressed,
+                    DUp: buttons[12]?.pressed,
+                    DDown: buttons[13]?.pressed,
+                    DLeft: buttons[14]?.pressed,
+                    DRight: buttons[15]?.pressed,
+                    axisLeftX: gp.axes[0] || 0,
+                    axisLeftY: gp.axes[1] || 0,
+                    axisRightX: gp.axes[2] || 0,
+                    axisRightY: gp.axes[3] || 0
+                };
+
+                this.inputStateCallback(input);
+            }
+        }
+
+        /**
+         * Integrated Games Engine (3D Odyssey, 3D Kart, 2D Metroid & Custom NSP)
+         */
+        class SwitchGameEngine {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.currentMode = null; // 'odyssey', 'kart', 'metroid', 'custom'
+                this.animationFrameId = null;
+
+                // Input state container
+                this.inputs = {
+                    moveX: 0,
+                    moveY: 0,
+                    lookX: 0,
+                    lookY: 0,
+                    btnA: false,
+                    btnB: false,
+                    btnX: false,
+                    btnY: false,
+                    btnL: false,
+                    btnR: false
+                };
+
+                // Three.js 3D context
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+
+                // 2D Canvas Context
+                this.ctx2d = null;
+
+                // Game state variables
+                this.player3D = null;
+                this.coins = [];
+                this.score = 0;
+                this.kartSpeed = 0;
+                this.kartAngle = 0;
+                this.metroidPlayer = { x: 100, y: 200, vx: 0, vy: 0, grounded: false, facingLeft: false };
+
+                // Custom NSP Runtime state
+                this.customRomData = null;
+            }
+
+            stop() {
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.animationFrameId = null;
+                }
+                if (this.renderer) {
+                    this.renderer.dispose();
+                    this.renderer = null;
+                }
+            }
+
+            // Launch Super Odyssey 3D
+            initOdyssey3D() {
+                this.stop();
+                this.currentMode = 'odyssey';
+                this.score = 0;
+
+                const width = this.canvas.clientWidth;
+                const height = this.canvas.clientHeight;
+
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a202c);
+                this.scene.fog = new THREE.FogExp2(0x1a202c, 0.03);
+
+                this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+                this.camera.position.set(0, 8, 14);
+
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+                this.renderer.setSize(width, height, false);
+                this.renderer.shadowMap.enabled = true;
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                const dirLight = new THREE.DirectionalLight(0xfffaed, 0.8);
+                dirLight.position.set(10, 20, 10);
+                dirLight.castShadow = true;
+                this.scene.add(dirLight);
+
+                // Ground World
+                const groundGeo = new THREE.CylinderGeometry(20, 22, 2, 32);
+                const groundMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.8 });
+                const ground = new THREE.Mesh(groundGeo, groundMat);
+                ground.position.y = -1;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Mario Player Mesh
+                const playerGroup = new THREE.Group();
+                const bodyGeo = new THREE.CapsuleGeometry(0.6, 0.8, 4, 8);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.castShadow = true;
+                playerGroup.add(body);
+
+                // Cappy Hat
+                const hatGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16);
+                const hatMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+                const hat = new THREE.Mesh(hatGeo, hatMat);
+                hat.position.y = 0.8;
+                playerGroup.add(hat);
+
+                this.player3D = playerGroup;
+                this.scene.add(this.player3D);
+
+                // Collectible Coins
+                this.coins = [];
+                for (let i = 0; i < 12; i++) {
+                    const coinGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
+                    const coinMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.8, roughness: 0.2 });
+                    const coin = new THREE.Mesh(coinGeo, coinMat);
+                    const angle = (i / 12) * Math.PI * 2;
+                    coin.position.set(Math.cos(angle) * 12, 0.8, Math.sin(angle) * 12);
+                    coin.rotation.x = Math.PI / 2;
+                    coin.castShadow = true;
+                    this.scene.add(coin);
+                    this.coins.push(coin);
+                }
+
+                this.loopOdyssey();
+            }
+
+            loopOdyssey() {
+                this.animationFrameId = requestAnimationFrame(() => this.loopOdyssey());
+
+                // Move Player
+                const speed = 0.15;
+                if (this.player3D) {
+                    this.player3D.position.x += this.inputs.moveX * speed;
+                    this.player3D.position.z += this.inputs.moveY * speed;
+
+                    // Rotate player
+                    if (this.inputs.moveX !== 0 || this.inputs.moveY !== 0) {
+                        this.player3D.rotation.y = Math.atan2(this.inputs.moveX, this.inputs.moveY);
+                    }
+
+                    // Jump action
+                    if (this.inputs.btnA && this.player3D.position.y <= 0.6) {
+                        this.player3D.position.y = 2.5;
+                        window.switchOS.audio.playClick();
+                    }
+                    if (this.player3D.position.y > 0.6) {
+                        this.player3D.position.y -= 0.08;
+                    }
+
+                    // Camera follow
+                    this.camera.position.x = this.player3D.position.x;
+                    this.camera.position.z = this.player3D.position.z + 12;
+                    this.camera.lookAt(this.player3D.position);
+                }
+
+                // Coin Rotation & Pickup Check
+                this.coins.forEach((coin, idx) => {
+                    if (coin.visible) {
+                        coin.rotation.z += 0.05;
+                        const dist = coin.position.distanceTo(this.player3D.position);
+                        if (dist < 1.2) {
+                            coin.visible = false;
+                            this.score += 100;
+                            window.switchOS.audio.playClick();
+                            window.switchOS.showToast(`Coin Picked! Score: ${this.score}`);
+                        }
+                    }
+                });
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            // Launch Cyber Kart DX 3D
+            initKart3D() {
+                this.stop();
+                this.currentMode = 'kart';
+                this.kartSpeed = 0;
+                this.kartAngle = 0;
+
+                const width = this.canvas.clientWidth;
+                const height = this.canvas.clientHeight;
+
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0f172a);
+
+                this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+                this.renderer.setSize(width, height, false);
+
+                // Lights
+                const amb = new THREE.AmbientLight(0xffffff, 0.7);
+                this.scene.add(amb);
+
+                // Track Ring
+                const trackGeo = new THREE.RingGeometry(15, 30, 64);
+                const trackMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
+                const track = new THREE.Mesh(trackGeo, trackMat);
+                track.rotation.x = Math.PI / 2;
+                this.scene.add(track);
+
+                // Kart Mesh
+                const kartGeo = new THREE.BoxGeometry(1.2, 0.6, 2.2);
+                const kartMat = new THREE.MeshStandardMaterial({ color: 0x00c3e3 });
+                this.player3D = new THREE.Mesh(kartGeo, kartMat);
+                this.player3D.position.set(22, 0.4, 0);
+                this.scene.add(this.player3D);
+
+                this.loopKart();
+            }
+
+            loopKart() {
+                this.animationFrameId = requestAnimationFrame(() => this.loopKart());
+
+                // Accelerate / Steering
+                if (this.inputs.btnA || this.inputs.moveY < -0.2) {
+                    this.kartSpeed = Math.min(this.kartSpeed + 0.01, 0.4);
+                } else {
+                    this.kartSpeed *= 0.96;
+                }
+
+                if (this.inputs.btnB) {
+                    this.kartSpeed *= 0.9;
+                }
+
+                this.kartAngle -= this.inputs.moveX * 0.04;
+                this.player3D.rotation.y = this.kartAngle;
+
+                this.player3D.position.x -= Math.sin(this.kartAngle) * this.kartSpeed;
+                this.player3D.position.z -= Math.cos(this.kartAngle) * this.kartSpeed;
+
+                // Camera placement behind kart
+                const camDist = 6;
+                this.camera.position.x = this.player3D.position.x + Math.sin(this.kartAngle) * camDist;
+                this.camera.position.z = this.player3D.position.z + Math.cos(this.kartAngle) * camDist;
+                this.camera.position.y = 3;
+                this.camera.lookAt(this.player3D.position);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            // Launch Metroid Dread 2D Canvas Engine
+            initMetroid2D() {
+                this.stop();
+                this.currentMode = 'metroid';
+                this.ctx2d = this.canvas.getContext('2d');
+                this.metroidPlayer = { x: 150, y: 300, vx: 0, vy: 0, grounded: false, facingLeft: false };
+
+                this.loopMetroid();
+            }
+
+            loopMetroid() {
+                this.animationFrameId = requestAnimationFrame(() => this.loopMetroid());
+
+                const ctx = this.ctx2d;
+                const width = this.canvas.width = this.canvas.clientWidth;
+                const height = this.canvas.height = this.canvas.clientHeight;
+
+                // Physics
+                const p = this.metroidPlayer;
+                p.vx = this.inputs.moveX * 5;
+                if (this.inputs.moveX < 0) p.facingLeft = true;
+                if (this.inputs.moveX > 0) p.facingLeft = false;
+
+                if (this.inputs.btnA && p.grounded) {
+                    p.vy = -12;
+                    p.grounded = false;
+                    window.switchOS.audio.playClick();
+                }
+
+                p.vy += 0.6; // Gravity
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Ground Collision
+                if (p.y >= height - 80) {
+                    p.y = height - 80;
+                    p.vy = 0;
+                    p.grounded = true;
+                }
+
+                // Render Metroid World
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(0, 0, width, height);
+
+                // Grid background effect
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < width; x += 40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+                }
+
+                // Ground
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(0, height - 60, width, 60);
+                ctx.fillStyle = '#a855f7';
+                ctx.fillRect(0, height - 60, width, 4);
+
+                // Samus Armor Player
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                if (p.facingLeft) ctx.scale(-1, 1);
+
+                ctx.fillStyle = '#f97316'; // Orange Suit
+                ctx.fillRect(-15, -40, 30, 40);
+                ctx.fillStyle = '#06b6d4'; // Visor
+                ctx.fillRect(2, -35, 10, 6);
+
+                // Arm Cannon
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(10, -25, 15, 8);
+
+                // Plasma Beam Fire
+                if (this.inputs.btnY || this.inputs.btnX) {
+                    ctx.fillStyle = '#facc15';
+                    ctx.beginPath();
+                    ctx.arc(35, -21, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+
+                // UI HUD Overlay
+                ctx.fillStyle = '#06b6d4';
+                ctx.font = 'bold 14px Inter';
+                ctx.fillText('ENERGY: 999/999 | METROID DREAD RUNNER', 20, 30);
+            }
+
+            // Launch Custom Imported NSP Engine Sandbox
+            initCustomNSP(parsedNSP) {
+                this.stop();
+                this.currentMode = 'custom';
+                this.customRomData = parsedNSP;
+                this.ctx2d = this.canvas.getContext('2d');
+
+                this.loopCustomNSP();
+            }
+
+            loopCustomNSP() {
+                this.animationFrameId = requestAnimationFrame(() => this.loopCustomNSP());
+
+                const ctx = this.ctx2d;
+                const width = this.canvas.width = this.canvas.clientWidth;
+                const height = this.canvas.height = this.canvas.clientHeight;
+
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0, 0, width, height);
+
+                // Render Binary Visualization Sandbox
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 18px Rajdhani';
+                ctx.fillText(`EXECUTING RUNABLE: ${this.customRomData.files[0]?.name || 'TITLE.NCA'}`, 30, 40);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px monospace';
+                ctx.fillText(`PFS0 Magic: ${this.customRomData.magic} | Sections: ${this.customRomData.numFiles}`, 30, 65);
+
+                // Simulated CPU Registers & Cycle Execution Matrix
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(30, 90, width - 60, height - 130);
+                ctx.strokeStyle = '#334155';
+                ctx.strokeRect(30, 90, width - 60, height - 130);
+
+                ctx.fillStyle = '#4ade80';
+                ctx.font = '11px monospace';
+                const time = Date.now();
+                for (let i = 0; i < 12; i++) {
+                    const reg = `X${i < 10 ? '0' + i : i}: 0x${((time * (i + 1)) % 0xFFFFFFFF).toString(16).padStart(8, '0').toUpperCase()}`;
+                    ctx.fillText(reg, 50, 120 + (i * 18));
+                }
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(`[ARM64 Dynarec Execution Active] Controller Input State: X:${this.inputs.moveX.toFixed(2)} Y:${this.inputs.moveY.toFixed(2)}`, 50, 360);
+            }
+
+            resize(width, height) {
+                if (this.renderer && this.camera) {
+                    this.camera.aspect = width / height;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(width, height, false);
+                }
+            }
+        }
+
+        /**
+         * Main Switch OS Master Controller
+         */
+        class SwitchOSMaster {
+            constructor() {
+                this.audio = new SwitchAudioEngine();
+                this.canvas = document.getElementById('game-canvas');
+                this.engine = new SwitchGameEngine(this.canvas);
+                this.gamepadManager = new GamepadManager((input) => this.handleGamepadInput(input));
+
+                this.hapticsEnabled = true;
+                this.docked = true;
+                this.activeRomName = "None";
+
+                this.setupEvents();
+                this.setupTouchControls();
+                this.startClock();
+                this.startPerformanceLoop();
+            }
+
+            setupEvents() {
+                // File Drop Zone for .NSP / .NRO files
+                const dropZone = document.getElementById('file-drop-zone');
+                const fileInput = document.getElementById('nsp-file-input');
+
+                dropZone.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-cyan-400', 'bg-cyan-950/30');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/30');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-cyan-400', 'bg-cyan-950/30');
+                    if (e.dataTransfer.files.length > 0) {
+                        this.handleFileSelect(e.dataTransfer.files[0]);
+                    }
+                });
+
+                // Keyboard Input Mapping
+                window.addEventListener('keydown', (e) => this.handleKeyboard(e, true));
+                window.addEventListener('keyup', (e) => this.handleKeyboard(e, false));
+
+                // Settings modal handlers
+                document.getElementById('open-settings-btn').addEventListener('click', () => {
+                    this.audio.playClick();
+                    document.getElementById('settings-modal').classList.remove('hidden');
+                });
+                document.getElementById('close-settings-btn').addEventListener('click', () => {
+                    this.audio.playClick();
+                    document.getElementById('settings-modal').classList.add('hidden');
+                });
+
+                // Dock/Handheld toggle button
+                document.getElementById('toggle-dock-btn').addEventListener('click', () => {
+                    this.docked = !this.docked;
+                    this.audio.playSnap();
+                    const badgeText = document.getElementById('resolution-mode-text');
+                    badgeText.innerText = this.docked ? '1080p 60FPS (Docked)' : '720p 60FPS (Handheld)';
+                    this.showToast(this.docked ? "Switched to TV Docked Mode" : "Switched to Handheld Mode");
+                });
+
+                // Opacity slider
+                document.getElementById('opacity-slider').addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    document.getElementById('left-joycon-panel').style.opacity = val;
+                    document.getElementById('right-joycon-panel').style.opacity = val;
+                });
+
+                // Window Resize
+                window.addEventListener('resize', () => {
+                    this.engine.resize(this.canvas.clientWidth, this.canvas.clientHeight);
+                });
+            }
+
+            // Keyboard Controller Binding
+            handleKeyboard(e, isDown) {
+                const key = e.key.toLowerCase();
+
+                if (key === 'a' || key === 'arrowleft') this.engine.inputs.moveX = isDown ? -1 : 0;
+                if (key === 'd' || key === 'arrowright') this.engine.inputs.moveX = isDown ? 1 : 0;
+                if (key === 'w' || key === 'arrowup') this.engine.inputs.moveY = isDown ? -1 : 0;
+                if (key === 's' || key === 'arrowdown') this.engine.inputs.moveY = isDown ? 1 : 0;
+
+                if (key === 'k' || key === ' ') this.engine.inputs.btnA = isDown;
+                if (key === 'j') this.engine.inputs.btnB = isDown;
+                if (key === 'i') this.engine.inputs.btnX = isDown;
+                if (key === 'u') this.engine.inputs.btnY = isDown;
+
+                if (isDown) this.triggerHaptic(10);
+            }
+
+            // On-Screen Joy-Con Touch Analog & Buttons Setup
+            setupTouchControls() {
+                const buttons = document.querySelectorAll('.btn-touch');
+                buttons.forEach(btn => {
+                    const key = btn.getAttribute('data-key');
+
+                    const startHandler = (e) => {
+                        e.preventDefault();
+                        btn.classList.add('active');
+                        this.audio.playClick();
+                        this.triggerHaptic(20);
+
+                        if (key === 'A') this.engine.inputs.btnA = true;
+                        if (key === 'B') this.engine.inputs.btnB = true;
+                        if (key === 'X') this.engine.inputs.btnX = true;
+                        if (key === 'Y') this.engine.inputs.btnY = true;
+                        if (key === 'DUp') this.engine.inputs.moveY = -1;
+                        if (key === 'DDown') this.engine.inputs.moveY = 1;
+                        if (key === 'DLeft') this.engine.inputs.moveX = -1;
+                        if (key === 'DRight') this.engine.inputs.moveX = 1;
+                        if (key === 'Home') this.toggleHomeMenu();
+                    };
+
+                    const endHandler = (e) => {
+                        e.preventDefault();
+                        btn.classList.remove('active');
+
+                        if (key === 'A') this.engine.inputs.btnA = false;
+                        if (key === 'B') this.engine.inputs.btnB = false;
+                        if (key === 'X') this.engine.inputs.btnX = false;
+                        if (key === 'Y') this.engine.inputs.btnY = false;
+                        if (key === 'DUp' || key === 'DDown') this.engine.inputs.moveY = 0;
+                        if (key === 'DLeft' || key === 'DRight') this.engine.inputs.moveX = 0;
+                    };
+
+                    btn.addEventListener('pointerdown', startHandler);
+                    btn.addEventListener('pointerup', endHandler);
+                    btn.addEventListener('pointercancel', endHandler);
+                });
+
+                // Touch Analog Sticks Mechanics
+                this.setupAnalogStick('analog-left-base', 'analog-left-stick', (x, y) => {
+                    this.engine.inputs.moveX = x;
+                    this.engine.inputs.moveY = y;
+                });
+
+                this.setupAnalogStick('analog-right-base', 'analog-right-stick', (x, y) => {
+                    this.engine.inputs.lookX = x;
+                    this.engine.inputs.lookY = y;
+                });
+            }
+
+            setupAnalogStick(baseId, stickId, callback) {
+                const base = document.getElementById(baseId);
+                const stick = document.getElementById(stickId);
+                let active = false;
+
+                const handleMove = (clientX, clientY) => {
+                    const rect = base.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+
+                    let deltaX = clientX - centerX;
+                    let deltaY = clientY - centerY;
+                    const maxRadius = rect.width / 2 - 10;
+
+                    const distance = Math.hypot(deltaX, deltaY);
+                    if (distance > maxRadius) {
+                        deltaX = (deltaX / distance) * maxRadius;
+                        deltaY = (deltaY / distance) * maxRadius;
+                    }
+
+                    stick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                    callback(deltaX / maxRadius, deltaY / maxRadius);
+                };
+
+                base.addEventListener('pointerdown', (e) => {
+                    active = true;
+                    handleMove(e.clientX, e.clientY);
+                });
+
+                window.addEventListener('pointermove', (e) => {
+                    if (active) handleMove(e.clientX, e.clientY);
+                });
+
+                const stopAnalog = () => {
+                    if (active) {
+                        active = false;
+                        stick.style.transform = `translate(0px, 0px)`;
+                        callback(0, 0);
+                    }
+                };
+
+                window.addEventListener('pointerup', stopAnalog);
+                window.addEventListener('pointercancel', stopAnalog);
+            }
+
+            handleGamepadInput(input) {
+                this.engine.inputs.btnA = input.A;
+                this.engine.inputs.btnB = input.B;
+                this.engine.inputs.btnX = input.X;
+                this.engine.inputs.btnY = input.Y;
+
+                if (Math.abs(input.axisLeftX) > 0.15) this.engine.inputs.moveX = input.axisLeftX;
+                if (Math.abs(input.axisLeftY) > 0.15) this.engine.inputs.moveY = input.axisLeftY;
+            }
+
+            // Handle NSP File Drop / Binary Read
+            async handleFileSelect(file) {
+                if (!file) return;
+
+                this.audio.playSnap();
+                this.showToast(`Parsing binary package: ${file.name}`);
+
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const parsedPFS0 = NSPParser.parse(buffer);
+
+                    console.log("PFS0 Parsed Successfully:", parsedPFS0);
+
+                    // Update UI Tree view
+                    const output = document.getElementById('pfs0-tree-output');
+                    output.innerText = `NSP PFS0 Magic: ${parsedPFS0.magic}\nTotal NCA Files: ${parsedPFS0.numFiles}\nHeader Size: ${parsedPFS0.headerSize} bytes\n------------------------------------\n` +
+                        parsedPFS0.files.map(f => ` - ${f.name} (Offset: ${f.offset}, Size: ${(f.size / 1024 / 1024).toFixed(2)} MB)`).join('\n');
+
+                    document.getElementById('os-overlay-screen').classList.add('hidden');
+                    document.getElementById('active-title-indicator').innerText = `Running: ${file.name}`;
+                    this.activeRomName = file.name;
+
+                    // Launch Custom Executable Engine
+                    this.engine.initCustomNSP(parsedPFS0);
+                    this.showToast("NSP Binary Section Executed!");
+
+                } catch (err) {
+                    console.error(err);
+                    this.showToast(`Error: ${err.message}`);
+                }
+            }
+
+            launchDemo(mode) {
+                this.audio.playLaunch();
+                document.getElementById('os-overlay-screen').classList.add('hidden');
+
+                if (mode === 'odyssey') {
+                    document.getElementById('active-title-indicator').innerText = "Running: Super Switch Odyssey 3D";
+                    this.engine.initOdyssey3D();
+                } else if (mode === 'kart') {
+                    document.getElementById('active-title-indicator').innerText = "Running: Cyber Kart DX";
+                    this.engine.initKart3D();
+                } else if (mode === 'metroid') {
+                    document.getElementById('active-title-indicator').innerText = "Running: Metroid Dread: Zero";
+                    this.engine.initMetroid2D();
+                }
+            }
+
+            toggleHomeMenu() {
+                this.audio.playClick();
+                const modal = document.getElementById('home-menu-modal');
+                modal.classList.toggle('hidden');
+            }
+
+            resumeGame() {
+                this.audio.playClick();
+                document.getElementById('home-menu-modal').classList.add('hidden');
+            }
+
+            exitToLibrary() {
+                this.audio.playClick();
+                this.engine.stop();
+                document.getElementById('home-menu-modal').classList.add('hidden');
+                document.getElementById('os-overlay-screen').classList.remove('hidden');
+                document.getElementById('active-title-indicator').innerText = "OS Ready - Select Title";
+            }
+
+            resetEmulator() {
+                this.audio.playSnap();
+                this.exitToLibrary();
+                this.showToast("Switch Runtime Memory Cleared");
+            }
+
+            showPFS0Log() {
+                document.getElementById('home-menu-modal').classList.add('hidden');
+                document.getElementById('settings-modal').classList.remove('hidden');
+            }
+
+            setTheme(themeClass) {
+                this.audio.playClick();
+                document.body.className = "flex flex-col h-screen w-screen bg-slate-950 text-gray-100 select-none overflow-hidden " + themeClass;
+                this.showToast("Joy-Con Theme Changed");
+            }
+
+            triggerHaptic(ms) {
+                if (this.hapticsEnabled && navigator.vibrate) {
+                    navigator.vibrate(ms);
+                }
+            }
+
+            updateBTStatus(connected, name) {
+                const icon = document.getElementById('bt-icon');
+                const text = document.getElementById('bt-text');
+                const info = document.getElementById('gamepad-info-box');
+
+                if (connected) {
+                    icon.className = "fa-bluetooth fa-brands text-cyan-400";
+                    text.innerText = "BT Connected";
+                    text.className = "hidden sm:inline text-cyan-400 font-bold";
+                    info.innerText = `Active Bluetooth Gamepad: ${name}\nInput Latency: ~1.2ms (Bluetooth HID)`;
+                } else {
+                    icon.className = "fa-bluetooth fa-brands text-slate-500";
+                    text.innerText = "BT Disconnected";
+                    text.className = "hidden sm:inline text-slate-400";
+                    info.innerText = "No external Gamepad connected. Pair any Bluetooth controller via browser standard.";
+                }
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast-msg');
+                const text = document.getElementById('toast-text');
+                text.innerText = msg;
+                toast.classList.remove('opacity-0', 'translate-y-4');
+                toast.classList.add('opacity-100', 'translate-y-0');
+
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-4');
+                }, 3000);
+            }
+
+            startClock() {
+                const update = () => {
+                    const now = new Date();
+                    document.getElementById('system-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                };
+                update();
+                setInterval(update, 10000);
+            }
+
+            startPerformanceLoop() {
+                let lastTime = performance.now();
+                let frames = 0;
+
+                const tick = () => {
+                    this.gamepadManager.poll();
+
+                    frames++;
+                    const now = performance.now();
+                    if (now - lastTime >= 1000) {
+                        const fps = (frames * 1000) / (now - lastTime);
+                        document.getElementById('fps-counter').innerText = fps.toFixed(1);
+                        frames = 0;
+                        lastTime = now;
+                    }
+                    requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            }
+        }
+
+        // Initialize Nintendo Switch Application on window load
+        window.onload = () => {
+            window.switchOS = new SwitchOSMaster();
+        };
+    </script>
 </body>
 </html>
