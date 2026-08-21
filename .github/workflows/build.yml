@@ -16,9 +16,10 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Clean, Add, Sync, and Build iOS App
+      - name: Install, Add iOS, and Build
         run: |
           npm install
+          npm install @capacitor/ios --save
           rm -rf ios
           npx cap add ios
           npx cap sync ios
