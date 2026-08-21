@@ -1,0 +1,12 @@
+{
+  "app": "GhostyStore",
+  "versions": [
+    { "version": "1.2.6", "build": "26", "url": "ipa/GhostyStore-1.2.6.ipa", "date": "2026-08-21" },
+    { "version": "1.2.5", "build": "25", "url": "ipa/GhostyStore-1.2.5.ipa", "date": "2026-08-20" },
+    { "version": "1.2.4", "build": "24", "url": "ipa/GhostyStore-1.2.4.ipa", "date": "2026-08-18" },
+    { "version": "1.2.3", "build": "23", "url": "ipa/GhostyStore-1.2.3.ipa", "date": "2026-08-15" },
+    { "version": "1.2.2", "build": "22", "url": "ipa/GhostyStore-1.2.2.ipa", "date": "2026-08-12" },
+    { "version": "1.2.1", "build": "21", "url": "ipa/GhostyStore-1.2.1.ipa", "date": "2026-08-10" },
+    { "version": "1.2.0", "build": "20", "url": "ipa/GhostyStore-1.2.0.ipa", "date": "2026-08-05" }
+  ]
+}
