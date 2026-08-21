@@ -16,9 +16,10 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Build iOS App
+      - name: Clean, Add, Sync, and Build iOS App
         run: |
           npm install
+          rm -rf ios
           npx cap add ios
           npx cap sync ios
           cd ios/App
